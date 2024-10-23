@@ -2,12 +2,29 @@ const canvas = document.getElementById('userCanvas');
 const ctx = canvas.getContext('2d');
 
 let user = { x: 50, y: 50, angle: 0, velocity: 0 };  // Initial user state
+let user_trajectory = [{ x: 400, y: 400 }, { x: 200, y: 250 }]
 
 // Draw the user on the canvas
 function drawUser() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);  // Clear the canvas
+    // Clear the canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw trajectory
+    // TODO: limit number of points remembered
+    user_trajectory.push({ x: user.x, y: user.y });
     ctx.beginPath();
-    ctx.arc(user.x, user.y, 20, 0, Math.PI * 2);  // Draw the user
+    for (let index = 1; index < user_trajectory.length; index++) {
+        const pre = user_trajectory[index - 1];
+        const cur = user_trajectory[index];
+        ctx.moveTo(pre.x, pre.y);
+        ctx.lineTo(cur.x, cur.y);
+        ctx.stroke();
+    }
+    ctx.closePath();
+
+    // Draw the user
+    ctx.beginPath();
+    ctx.arc(user.x, user.y, 20, 0, Math.PI * 2);
     ctx.fillStyle = 'blue';
     ctx.fill();
     ctx.closePath();
@@ -34,3 +51,5 @@ ws.onmessage = (event) => {
 ws.onclose = () => {
     console.log('WebSocket connection closed');
 };
+
+drawUser();
