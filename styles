@@ -1,0 +1,72 @@
+/* 基本全局样式 */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    height: 100vh;
+    background-color: #f4f4f4;
+}
+
+.container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    width: 100%;
+    max-width: 1200px;
+}
+
+/* 物理空间和虚拟空间的画布样式 */
+#physCanvas, #virtCanvas {
+    border: 1px solid #333;
+    background-color: #fff;
+}
+
+/* 控制按钮的样式 */
+.sidebar, .controls {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.sidebar button, .controls button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    background-color: #007BFF;
+    color: white;
+    transition: background-color 0.3s ease;
+}
+
+.sidebar button:hover, .controls button:hover {
+    background-color: #0056b3;
+}
+
+.sidebar input[type=file] {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    color: #333;
+}
+
+/* 数据面板的样式 */
+.data-panel {
+    flex-basis: 300px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.data-panel p {
+    margin-bottom: 10px;
+}
