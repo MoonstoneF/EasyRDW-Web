@@ -1,24 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <title>User Movement Visualization</title>
-    <style>
-        canvas {
-            border: 1px solid black;
-            background-color: #f0f0f0;
-        }
-    </style>
+    <title>User Position Tracking</title>
+    <!-- 引用外部的CSS文件 -->
+    <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
-    <h1>User Movement Visualization</h1>
+    <div class="container">
+        <div class="sidebar">
+            <h2>Configuration</h2>
+            <button id="presetVirtualSpace">Preset Virtual Space</button>
+            <button id="presetPhysicalSpace">Preset Physical Space</button>
+            <button id="presetTargets">Preset Targets</button>
+            <button id="uploadConfig">Upload Config</button>
+        </div>
+        <div class="main-content">
+            <div class="space-display">
+                <h2>Physical Space</h2>
+                <canvas id="physCanvas" width="300" height="300"></canvas>
+            </div>
+            <div class="space-display">
+                <h2>Virtual Space</h2>
+                <canvas id="virtCanvas" width="300" height="300"></canvas>
+            </div>
+            <div class="controls">
+                <button id="startButton">Start</button>
+                <button id="pauseButton">Pause</button>
+                <button id="resetButton">Reset</button>
+            </div>
+        </div>
+        <div class="data-panel">
+            <h2>Data</h2>
+            <p><strong>Position:</strong> <span id="position">x: 0, y: 0</span></p>
+            <p><strong>Orientation:</strong> <span id="orientation">0°</span></p>
+            <p><strong>Speed:</strong> <span id="speed">0</span></p>
+        </div>
+    </div>
 
-    <!-- Canvas for visualization -->
-    <canvas id="userCanvas" width="800" height="600"></canvas>
-
+    <!-- 引用外部的JS文件 -->
     <script src="script/drawUser.js"></script>
 </body>
-
 </html>
