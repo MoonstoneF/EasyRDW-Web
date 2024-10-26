@@ -1,42 +1,88 @@
 // Misc
 let MAX_PATH_LEN = 100;
 
+// Environments
+const canvas_phys = document.getElementById('physCanvas');
+const canvas_virt = document.getElementById('virtCanvas');
+let border_phys = [{ x: 0, y: 0 }, { x: 0, y: 500 }, { x: 500, y: 0 }, { x: 500, y: 500 }];
+let border_virt = [{ x: 0, y: 0 }, { x: 0, y: 600 }, { x: 600, y: 0 }, { x: 600, y: 600 }];
+let obstacles_phys = [
+    [{ x: 100, y: 100 }, { x: 100, y: 200 }, { x: 200, y: 200 }, { x: 200, y: 100 }],
+    [{ x: 300, y: 300 }, { x: 300, y: 400 }, { x: 400, y: 400 }, { x: 400, y: 300 }]
+];
+let obstacles_virt = []
+
 // User position and path in both environemnts
 let user_phys = { x: 50, y: 50, angle: 0, velocity: 0 };  // Initial user state
 let user_virt = { x: 50, y: 50, angle: 0, velocity: 0 };
-let path_phys = [{ x: user_phys.x, y: user_phys.y }];
+let path_phys = [{ x: user_phys.x, y: user_phys.y }];   // TODO: Log more user info
 let path_virt = [{ x: user_virt.x, y: user_virt.y }];
 
-// Canvas for both environments
-const canvas_phys = document.getElementById('physCanvas');
-const canvas_virt = document.getElementById('virtCanvas');
+function drawPolygon(ctx, points) {
+    // Find min max to get center
+    // Sort from top to bottom
+    points.sort((a, b) => a.y - b.y);
 
-// TODO: Draw environment per user input
-function drawEnvironment(canvas, border, obstacle_list) {
-    ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Get center y
+    const cy = (points[0].y + points[points.length - 1].y) / 2;
 
+    // Sort from right to left
+    points.sort((a, b) => b.x - a.x);
+
+    // Get center x
+    const cx = (points[0].x + points[points.length - 1].x) / 2;
+
+    // Center point
+    const center = { x: cx, y: cy };
+
+    // Starting angle used to reference other angles
+    var startAng;
+    points.forEach(point => {
+        var ang = Math.atan2(point.y - center.y, point.x - center.x);
+        if (!startAng) { startAng = ang }
+        else {
+            if (ang < startAng) {  // ensure that all points are clockwise of the start point
+                ang += Math.PI * 2;
+            }
+        }
+        point.angle = ang; // add the angle to the point
+    });
+
+    // Sort clockwise;
+    points.sort((a, b) => a.angle - b.angle);
+
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+    }
+    ctx.closePath();
+}
+
+// Draw environment
+function drawEnvironment(ctx, border, obstacles) {
+    // Draw border
+    ctx.fillStyle = "aquamarine"
+    drawPolygon(ctx, border);
+    ctx.stroke();
+
+    // Draw obstacles
+    ctx.fillStyle = "red"
+    for (let i = 0; i < obstacles.length; i++) {
+        drawPolygon(ctx, obstacles[i]);
+        ctx.fill();
+    }
 }
 
 // Draw the user on the canvas
-function drawUser(canvas, user, path) {
-    console.log("drawUser");
-
-    // Clear the canvas
-    ctx = canvas.getContext('2d');
-
-    // TODO: Draw environment and obstacles
-
+function drawUser(ctx, user, path) {
     // Draw path
     ctx.beginPath();
     ctx.moveTo(path[0].x, path[0].y);
-    for (let index = 1; index < path.length; index++) {
-        const pre = path[index - 1];
-        const cur = path[index];
-        ctx.lineTo(cur.x, cur.y);
+    for (let i = 1; i < path.length; i++) {
+        ctx.lineTo(path[i].x, path[i].y);
         ctx.stroke();
     }
-    ctx.closePath();
 
     // Draw the user
     ctx.beginPath();
@@ -45,6 +91,23 @@ function drawUser(canvas, user, path) {
     ctx.fill();
     ctx.closePath();
 }
+
+function drawPhys() {
+    ctx = canvas_phys.getContext('2d');
+    ctx.clearRect(0, 0, canvas_phys.width, canvas_phys.height);
+
+    drawEnvironment(ctx, border_phys, obstacles_phys);
+    drawUser(ctx, user_phys, path_phys);
+}
+
+function drawVirt() {
+    ctx = canvas_virt.getContext('2d');
+    ctx.clearRect(0, 0, canvas_virt.width, canvas_virt.height);
+
+    drawEnvironment(ctx, border_virt, obstacles_virt);
+    drawUser(ctx, user_phys, path_phys);
+}
+
 
 // -------------------------- WebSocket -----------------------------
 
@@ -62,17 +125,14 @@ function sendStartMsg() {
         physical: {
             height: 100,
             width: 100,
-            border: [(0, 0), (0, 100), (100, 0), (100, 100)],
-            obstacle_list: [
-                [(20, 20), (20, 40), (40, 40), (40, 20)],
-                [(60, 60), (60, 80), (80, 80), (80, 60)]
-            ]
+            border: border_phys,
+            obstacle_list: obstacles_phys,
         },
         virtual: {
             height: 200,
             width: 200,
-            border: [(0, 0), (0, 400), (400, 0), (400, 400)],
-            obstacle_list: []
+            border: border_virt,
+            obstacle_list: obstacles_virt,
         }
 
     }
@@ -124,14 +184,14 @@ ws.onmessage = (event) => {
             user_phys = { x: msg.user_x, y: msg.user_y, angle: msg.user_direction }
             if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
                 path_phys.shift();  // Update physical path
-            drawUser(canvas_phys, user_phys, path_phys);
+            drawPhys();
 
             // TODO: New user virtual position
             // Rotate/walk towards next poi with configured speed
 
             if (path_virt.push({ x: user_virt.x, y: user_virt.y }) > MAX_PATH_LEN)
                 path_virt.shift();  // Update virtual path
-            drawUser(canvas_virt, user_virt, path_virt);
+            drawVirt();
 
             // Send next frame
             sendRunMsg();
@@ -151,4 +211,5 @@ ws.onclose = () => {
 };
 
 // Test when no socket
-drawUser(canvas_phys, user_phys, path_phys);
+drawPhys();
+drawVirt();
