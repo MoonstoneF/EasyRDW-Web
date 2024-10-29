@@ -20,8 +20,8 @@ let obstacles_phys = [
 let obstacles_virt = []
 
 // User position and path in both environemnts
-let user_phys = { x: 50, y: 50, angle: 0, velocity: 0 };  // Initial user state
-let user_virt = { x: 50, y: 50, angle: 0, velocity: 0 };
+let user_phys = { x: 50, y: 50, angle: 0, v: 0, w: 0 };  // Initial user state
+let user_virt = { x: 50, y: 50, angle: 0, v: 0, w: 0 };
 let path_phys = [{ x: user_phys.x, y: user_phys.y }];
 let path_virt = [{ x: user_virt.x, y: user_virt.y }];
 
@@ -34,6 +34,8 @@ let turn_speed = 0.1;   // radius/frame
 
 // User log info
 // TODO: Log more user info
+
+// ---------------------------- Draw functions ----------------------------
 
 function drawPolygon(ctx, points) {
     // Find min max to get center
@@ -147,7 +149,7 @@ function drawVirt() {
 // drawPhys();
 // drawVirt();
 
-// -------------------------- WebSocket -----------------------------
+// -------------------------------- WebSocket ------------------------------
 
 let ws_time = 0;
 let all_time = 0;
@@ -197,7 +199,8 @@ function sendRunMsg() {
             user_y: user_virt.y,
             user_direction: user_virt.angle
         },
-        user_v: user_virt.velocity,
+        user_v: user_virt.v,
+        user_w: user_virt.w,
         delta_t: delta_t,
         need_reset: need_reset
     };
@@ -212,6 +215,7 @@ function sendEndMsg() {
     ws.send(JSON.stringify(end_msg));
 }
 
+// Walk simulation
 function walk() {
     if (poi_index >= poi.length) {
         return false;
@@ -230,6 +234,7 @@ function walk() {
     // Check if the walker is rotating or moving
     if (is_rotating) {
         // Rotate towards the target angle
+        user_virt.w = turn_speed;
         if (Math.abs(user_virt.angle - target_angle) < Math.PI)
             if (user_virt.angle < target_angle) {
                 user_virt.angle += turn_speed;
@@ -251,15 +256,17 @@ function walk() {
                 }
             }
         }
-        // console.log("angle", user_virt.angle, target_angle);
 
+        // Turned to target angle
         if (Math.abs(user_virt.angle - target_angle) < turn_speed) {
             user_virt.angle = target_angle; // Snap to the target angle
-            user_virt.velocity = walk_speed;    // start walking
+            user_virt.v = walk_speed;    // Start walking
+            user_virt.w = 0;
             is_rotating = false; // Stop rotating
             // console.log(`Finished rotating towards POI: ${JSON.stringify(target_poi)}`);
         }
-    } else {
+    }
+    else {
         // Move towards the target POI if not rotating
         if (distance > walk_speed) {
             const normalizedDirection = {
@@ -269,14 +276,20 @@ function walk() {
 
             user_virt.x += normalizedDirection.x * walk_speed;
             user_virt.y += normalizedDirection.y * walk_speed;
-            user_virt.velocity = walk_speed;
             user_virt.angle = target_angle;
-        } else {
+            user_virt.v = walk_speed;
+            user_virt.w = 0;
+        }
+        else {
             // Move to the target POI
-            user_virt = { x: target_poi.x, y: target_poi.y, velocity: 0, angle: target_angle };
+            user_virt.x = target_poi.x;
+            user_virt.y = target_poi.y;
+            user_virt.angle = target_angle;
+            user_virt.v = 0;
+            user_virt.w = turn_speed;
+            is_rotating = true; // Start rotating towards the next POI
 
             console.log(`Arrived at POI: ${JSON.stringify(target_poi)}`);
-            is_rotating = true; // Start rotating towards the next POI
             poi_index++;
         }
     }
@@ -322,6 +335,9 @@ ws.onmessage = async (event) => {
                 break;
             }
 
+            // Sleep
+            await sleep(delta_t * 1000);
+
             // Send next frame
             sendRunMsg();
             break;
@@ -333,9 +349,6 @@ ws.onmessage = async (event) => {
     }
     let t2 = performance.now()
     ws_time += (t2 - t1);
-
-    // Sleep
-    await sleep(delta_t * 1000);
 };
 
 ws.onclose = () => {
