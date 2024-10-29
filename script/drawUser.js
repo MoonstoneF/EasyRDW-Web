@@ -125,12 +125,12 @@ function drawVirt() {
     ctx.clearRect(0, 0, canvas_virt.width, canvas_virt.height);
 
     drawEnvironment(ctx, border_virt, obstacles_virt);
-    drawUser(ctx, user_phys, log_phys);
+    drawUser(ctx, user_virt, log_virt);
 }
 
 // Test when no socket
-drawPhys();
-drawVirt();
+// drawPhys();
+// drawVirt();
 
 // -------------------------- WebSocket -----------------------------
 
@@ -183,12 +183,15 @@ function sendRunMsg() {
         delta_t: 0.02,
         need_reset: need_reset
     };
+
+    ws.send(JSON.stringify(run_msg));
 }
 
 function sendEndMsg() {
     const end_msg = {
         type: "end",
     };
+    ws.send(JSON.stringify(end_msg));
 }
 
 function walk() {
@@ -209,11 +212,18 @@ function walk() {
     // Check if the walker is rotating or moving
     if (is_rotating) {
         // Rotate towards the target angle
-        user_direction += turn_speed;
-        if (Math.abs(user_direction - target_angle) < 0.01) {
-            user_direction = target_angle; // Snap to the target angle
+        if (user_virt.angle < target_angle)
+            user_virt.angle += turn_speed;
+        else {
+            user_virt.angle -= turn_speed;
+        }
+        console.log("angle", user_virt.angle, target_angle);
+
+        if (Math.abs(user_virt.angle - target_angle) < turn_speed) {
+            user_virt.angle = target_angle; // Snap to the target angle
+            user_virt.velocity = walk_speed;    // start walking
             is_rotating = false; // Stop rotating
-            // console.log(`Finished rotating towards POI: ${JSON.stringify(targetPOI)}`);
+            console.log(`Finished rotating towards POI: ${JSON.stringify(target_poi)}`);
         }
     } else {
         // Move towards the target POI if not rotating
@@ -227,15 +237,14 @@ function walk() {
             user_virt.y += normalizedDirection.y * walk_speed;
         } else {
             // Move to the target POI
-            user_virt = { ...targetPOI };
-            console.log(`Arrived at POI: ${JSON.stringify(targetPOI)}`);
+            user_virt = { x: target_poi.x, y: target_poi.y, velocity: 0, angle: target_angle };
+
+            console.log(`Arrived at POI: ${JSON.stringify(target_poi)}`);
             is_rotating = true; // Start rotating towards the next POI
             poi_index++;
-            if (poi_index < poi.length) {
-                console.log(`Now rotating towards next POI: ${JSON.stringify(this.pois[this.currentPOIIndex])}`);
-            }
         }
     }
+    return true;
 }
 
 ws.onopen = () => {
@@ -247,10 +256,13 @@ ws.onopen = () => {
 
 ws.onmessage = (event) => {
     msg = JSON.parse(event.data);
+    console.log("on message")
 
     switch (msg.type) {
         case "start":
             // Start simulation, send first frame
+            console.log("msg.type == start");
+
             sendRunMsg();
             break;
 
@@ -279,7 +291,7 @@ ws.onmessage = (event) => {
 
         case "end":
             // end simulation
-            ws.close(1, "End of simulation");
+            ws.close();
             break;
     }
 
