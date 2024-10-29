@@ -149,6 +149,9 @@ function drawVirt() {
 
 // -------------------------- WebSocket -----------------------------
 
+let ws_time = 0;
+let all_time = 0;
+
 // Set up WebSocket connection to local Python server
 const ws = new WebSocket('ws://localhost:8765');  // Connect to the local Python program
 
@@ -248,13 +251,13 @@ function walk() {
                 }
             }
         }
-        console.log("angle", user_virt.angle, target_angle);
+        // console.log("angle", user_virt.angle, target_angle);
 
         if (Math.abs(user_virt.angle - target_angle) < turn_speed) {
             user_virt.angle = target_angle; // Snap to the target angle
             user_virt.velocity = walk_speed;    // start walking
             is_rotating = false; // Stop rotating
-            console.log(`Finished rotating towards POI: ${JSON.stringify(target_poi)}`);
+            // console.log(`Finished rotating towards POI: ${JSON.stringify(target_poi)}`);
         }
     } else {
         // Move towards the target POI if not rotating
@@ -282,20 +285,21 @@ function walk() {
 
 ws.onopen = () => {
     console.log('WebSocket connection opened');
+    all_time = performance.now();
 
     // Send simulation start message and setup info
     sendStartMsg();
 };
 
 ws.onmessage = async (event) => {
+    let t1 = performance.now();
+
     msg = JSON.parse(event.data);
-    console.log("on message")
+    // console.log("on message")
 
     switch (msg.type) {
         case "start":
             // Start simulation, send first frame
-            console.log("msg.type == start");
-
             sendRunMsg();
             break;
 
@@ -311,9 +315,6 @@ ws.onmessage = async (event) => {
                 path_phys.shift();  // Update physical path
             drawPhys();
 
-            // Sleep
-            await sleep(delta_t * 1000);
-
             // New user virtual position for next frame
             if (!walk()) {
                 // Finish simulation
@@ -328,11 +329,17 @@ ws.onmessage = async (event) => {
         case "end":
             // end simulation
             ws.close();
-            break;
+            return;
     }
+    let t2 = performance.now()
+    ws_time += (t2 - t1);
 
+    // Sleep
+    await sleep(delta_t * 1000);
 };
 
 ws.onclose = () => {
     console.log('WebSocket connection closed');
+    let all_time2 = performance.now();
+    console.log("all: ", all_time2 - all_time, "walk and draw: ", ws_time, "rest: ", all_time2 - all_time - ws_time);
 };
