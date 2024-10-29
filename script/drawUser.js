@@ -1,5 +1,10 @@
 // Misc
-let MAX_PATH_LEN = 100;
+const MAX_PATH_LEN = 1000;
+const delta_t = 0.02;
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 // Environments
 const canvas_phys = document.getElementById('physCanvas');
@@ -15,6 +20,8 @@ let obstacles_virt = []
 // User position and path in both environemnts
 let user_phys = { x: 50, y: 50, angle: 0, velocity: 0 };  // Initial user state
 let user_virt = { x: 50, y: 50, angle: 0, velocity: 0 };
+let path_phys = [{ x: user_phys.x, y: user_phys.y }];
+let path_virt = [{ x: user_virt.x, y: user_virt.y }];
 
 // User config
 let poi = [{ x: 50, y: 150 }, { x: 150, y: 150 }, { x: 150, y: 50 }, { x: 50, y: 50 }]
@@ -24,8 +31,7 @@ let walk_speed = 1;    // pixel/frame
 let turn_speed = 0.1;   // radius/frame
 
 // User log info
-let log_phys = [{ x: user_phys.x, y: user_phys.y }];   // TODO: Log more user info
-let log_virt = [{ x: user_virt.x, y: user_virt.y }];
+// TODO: Log more user info
 
 function drawPolygon(ctx, points) {
     // Find min max to get center
@@ -89,15 +95,24 @@ function drawUser(ctx, user, path) {
     ctx.moveTo(path[0].x, path[0].y);
     for (let i = 1; i < path.length; i++) {
         ctx.lineTo(path[i].x, path[i].y);
-        ctx.stroke();
     }
+    ctx.stroke();
 
     // Draw the user
+    ctx.save(); // Save the current canvas state
+    ctx.translate(user.x, user.y); // Move to the arrow's position
+    ctx.rotate(user.angle + Math.PI / 2); // Rotate the canvas to the angle
+
+    // Draw the arrow
     ctx.beginPath();
-    ctx.arc(user.x, user.y, 20, 0, Math.PI * 2);
+    ctx.moveTo(0, -20); // Move to the tip of the arrow
+    ctx.lineTo(-10, 10); // Left side of the arrow
+    ctx.lineTo(0, 0);
+    ctx.lineTo(10, 10); // Right side of the arrow
+    ctx.closePath();
     ctx.fillStyle = 'blue';
     ctx.fill();
-    ctx.closePath();
+    ctx.restore(); // Restore the canvas state
 }
 
 function drawPhys() {
@@ -116,7 +131,7 @@ function drawPhys() {
     drawUser(
         ctx,
         { x: user_phys.x * 5, y: user_phys.y * 5 },
-        log_phys.map(element => ({ x: element.x * 5, y: element.y * 5 }))
+        path_phys.map(element => ({ x: element.x * 5, y: element.y * 5 }))
     );
 }
 
@@ -125,7 +140,7 @@ function drawVirt() {
     ctx.clearRect(0, 0, canvas_virt.width, canvas_virt.height);
 
     drawEnvironment(ctx, border_virt, obstacles_virt);
-    drawUser(ctx, user_virt, log_virt);
+    drawUser(ctx, user_virt, path_virt);
 }
 
 // Test when no socket
@@ -180,7 +195,7 @@ function sendRunMsg() {
             user_direction: user_virt.angle
         },
         user_v: user_virt.velocity,
-        delta_t: 0.02,
+        delta_t: delta_t,
         need_reset: need_reset
     };
 
@@ -212,10 +227,26 @@ function walk() {
     // Check if the walker is rotating or moving
     if (is_rotating) {
         // Rotate towards the target angle
-        if (user_virt.angle < target_angle)
-            user_virt.angle += turn_speed;
+        if (Math.abs(user_virt.angle - target_angle) < Math.PI)
+            if (user_virt.angle < target_angle) {
+                user_virt.angle += turn_speed;
+            }
+            else {
+                user_virt.angle -= turn_speed;
+            }
         else {
-            user_virt.angle -= turn_speed;
+            if (user_virt.angle < target_angle) {
+                user_virt.angle -= turn_speed;
+                if (user_virt.angle < - Math.PI) {
+                    user_virt.angle += 2 * Math.PI;
+                }
+            }
+            else {
+                user_virt.angle += turn_speed;
+                if (user_virt.angle > Math.PI) {
+                    user_virt.angle -= 2 * Math.PI;
+                }
+            }
         }
         console.log("angle", user_virt.angle, target_angle);
 
@@ -235,6 +266,8 @@ function walk() {
 
             user_virt.x += normalizedDirection.x * walk_speed;
             user_virt.y += normalizedDirection.y * walk_speed;
+            user_virt.velocity = walk_speed;
+            user_virt.angle = target_angle;
         } else {
             // Move to the target POI
             user_virt = { x: target_poi.x, y: target_poi.y, velocity: 0, angle: target_angle };
@@ -254,7 +287,7 @@ ws.onopen = () => {
     sendStartMsg();
 };
 
-ws.onmessage = (event) => {
+ws.onmessage = async (event) => {
     msg = JSON.parse(event.data);
     console.log("on message")
 
@@ -268,15 +301,18 @@ ws.onmessage = (event) => {
 
         case "running":
             // Draw user virtual position for this frame
-            if (log_virt.push({ x: user_virt.x, y: user_virt.y }) > MAX_PATH_LEN)
-                log_virt.shift();  // Update virtual path
+            if (path_virt.push({ x: user_virt.x, y: user_virt.y }) > MAX_PATH_LEN)
+                path_virt.shift();  // Update virtual path
             drawVirt();
 
             // Receive user physical position for this frame
             user_phys = { x: msg.user_x, y: msg.user_y, angle: msg.user_direction }
-            if (log_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
-                log_phys.shift();  // Update physical path
+            if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
+                path_phys.shift();  // Update physical path
             drawPhys();
+
+            // Sleep
+            await sleep(delta_t * 1000);
 
             // New user virtual position for next frame
             if (!walk()) {
