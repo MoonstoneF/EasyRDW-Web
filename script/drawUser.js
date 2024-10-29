@@ -1,6 +1,8 @@
 // Misc
 const MAX_PATH_LEN = 1000;
 const delta_t = 0.02;
+let scale_phys = 2;
+let scale_virt = 1.5;
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -119,28 +121,26 @@ function drawPhys() {
     ctx = canvas_phys.getContext('2d');
     ctx.clearRect(0, 0, canvas_phys.width, canvas_phys.height);
 
-    drawEnvironment(
-        ctx,
-        border_phys.map(element => ({ x: element.x * 5, y: element.y * 5 })),
-        obstacles_phys.map(a => (
-            a.map(element => (
-                { x: element.x * 5, y: element.y * 5 })
-            )
-        ))
-    );
-    drawUser(
-        ctx,
-        { x: user_phys.x * 5, y: user_phys.y * 5 },
-        path_phys.map(element => ({ x: element.x * 5, y: element.y * 5 }))
-    );
+    // Apply Scale
+    ctx.scale(scale_phys, scale_phys);
+
+    drawEnvironment(ctx, border_phys, obstacles_phys);
+    drawUser(ctx, user_phys, path_phys);
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
 }
 
 function drawVirt() {
     ctx = canvas_virt.getContext('2d');
     ctx.clearRect(0, 0, canvas_virt.width, canvas_virt.height);
 
+    // Apply Scale
+    ctx.scale(scale_virt, scale_virt);
+
     drawEnvironment(ctx, border_virt, obstacles_virt);
     drawUser(ctx, user_virt, path_virt);
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
 }
 
 // Test when no socket
