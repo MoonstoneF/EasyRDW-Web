@@ -1,8 +1,8 @@
 // Misc
 const MAX_PATH_LEN = 1000;
 const delta_t = 0.02;
-let scale_phys = 2;
-let scale_virt = 1.5;
+let scale_phys = 1;
+let scale_virt = 1;
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -37,7 +37,7 @@ let turn_speed = 0.1;   // radius/frame
 // User log info
 // TODO: Log more user info
 let need_reset = false;
-let reset_counter = 0;
+let reset_cnt = 0;
 let distance_phys = 0;
 let distance_virt = 0;
 
@@ -149,6 +149,21 @@ function drawVirt() {
     drawUser(ctx, user_virt, path_virt);
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+// Function to update the HTML with variable values
+function writeText() {
+    document.getElementById('virtualPosition').textContent = JSON.stringify(user_virt);
+    document.getElementById('physicalPosition').textContent = JSON.stringify(user_phys);
+    document.getElementById('virtualDistance').textContent = distance_virt + ' m';
+    document.getElementById('physicalDistance').textContent = distance_phys + ' m';
+    document.getElementById('totalResets').textContent = reset_cnt;
+}
+
+function updateView() {
+    drawVirt();
+    drawPhys();
+    writeText();
 }
 
 // Test when no socket
@@ -294,8 +309,7 @@ function reset() {
     path_phys = [{ x: user_phys.x, y: user_phys.y }];
     path_virt = [{ x: user_virt.x, y: user_virt.y }];
     poi_index = 0;
-    drawVirt();
-    drawPhys();
+    updateView();
 }
 
 function downloadData() {
@@ -341,9 +355,6 @@ function sendStartMsg() {
 }
 
 function sendRunMsg() {
-    // TODO: need_reset detection
-    let need_reset = false;
-
     const run_msg = {
         type: "running",
         physical: {
@@ -378,8 +389,7 @@ function sendEndMsg() {
 ws.onopen = () => {
     console.log('WebSocket connection opened');
     all_time = performance.now();
-    drawVirt();
-    drawPhys();
+    updateView();
     // Send simulation start message and setup info
     // sendStartMsg();
 };
@@ -402,26 +412,26 @@ ws.onmessage = async (event) => {
         case "running":
             // Up reset counter
             if (msg.reset) {
-                reset_counter++;
-                console.log("Reset: ", reset_counter);
+                reset_cnt++;
+                console.log("Reset: ", reset_cnt);
             }
             // Calc distance
             distance_phys += Math.sqrt((msg.user_x - user_phys.x) ** 2 + (msg.user_y - user_phys.y) ** 2);
             // Update user physcial position
             user_phys = { x: msg.user_x, y: msg.user_y, angle: msg.user_direction }
+
             // Reset detection
             need_reset = checkCollisions(user_phys, obstacles_phys);
 
             // Accept this frame
             if (!need_reset) {
+                // Update path
                 if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
-                    path_phys.shift();  // Update physical path
-                drawPhys();
-
-                // Draw user virtual position for this frame
+                    path_phys.shift();
                 if (path_virt.push({ x: user_virt.x, y: user_virt.y }) > MAX_PATH_LEN)
-                    path_virt.shift();  // Update virtual path
-                drawVirt();
+                    path_virt.shift();
+
+                updateView();
 
                 // New user virtual position for next frame
                 if (!walk()) {

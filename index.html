@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>User Position Tracking</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="script/styles.css">
 </head>
+
 <body>
     <div class="container">
         <div class="sidebar">
@@ -25,7 +27,8 @@
             </div>
             <div class="data-panel">
                 <h3>Data Panel</h3>
-                <div class="data-item">Position: <span id="position">0, 0</span></div>
+                <div class="data-item">Virtual Position: <span id="virtualPosition">(0, 0)</span></div>
+                <div class="data-item">Physical Position: <span id="physicalPosition">(0, 0)</span></div>
                 <div class="data-item">Virtual Distance: <span id="virtualDistance">0 m</span></div>
                 <div class="data-item">Physical Distance: <span id="physicalDistance">0 m</span></div>
                 <div class="data-item">Total Resets: <span id="totalResets">0</span></div>
@@ -67,13 +70,15 @@
                 </div>
             </div>
             <div class="controls">
-                <button id="startButton">Start</button>
-                <button id="pauseButton">Pause</button>
-                <button id="resetButton">Reset</button>
+                <button id="startButton" onclick="start()">Start</button>
+                <button id="pauseButton" onclick="pause()">Pause</button>
+                <button id="resetButton" onclick="reset()">Reset</button>
                 <button id="downloadData">Download Data</button>
             </div>
         </div>
     </div>
+
+    <script src="script/drawUser.js"></script>
 
     <script>
         // 获取按钮和元素
@@ -141,4 +146,5 @@
         });
     </script>
 </body>
+
 </html>
