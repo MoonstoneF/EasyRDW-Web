@@ -36,6 +36,9 @@ let turn_speed = 0.1;   // radius/frame
 
 // User log info
 // TODO: Log more user info
+let need_reset = false;
+let reset_counter = 0;
+let total_distance = 0;
 
 // ---------------------------- Draw functions ----------------------------
 
@@ -151,106 +154,33 @@ function drawVirt() {
 // drawPhys();
 // drawVirt();
 
-// -------------------------------- WebSocket ------------------------------
+// ------------------------------- Walk Simulation ----------------------------
 
-let ws_time = 0;
-let all_time = 0;
-let has_start = false;
-let is_paused = false;
-let in_pause_msg = {};
+// Reset detection
+function pointInPolygon(point, vertices) {
+    let inside = false;
+    const n = vertices.length;
 
-function start(){
-    if (!has_start){
-        sendStartMsg();
-        has_start = true;
-    }else{
-        if(is_paused){
-            ws.send(JSON.stringify(in_pause_msg));
-        }
-        is_paused = false;
+    for (let i = 0, j = n - 1; i < n; j = i++) {
+        const xi = vertices[i].x, yi = vertices[i].y;
+        const xj = vertices[j].x, yj = vertices[j].y;
+        const intersect = ((yi > point.y) !== (yj > point.y)) &&
+            (point.x < (xj - xi) * (point.y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
     }
+
+    return inside;
 }
 
-function pause(){
-    is_paused = true;
-}
-
-function reset(){
-    sendEndMsg();
-    has_start = false;
-    user_phys = {x: initial_user_phys.x, y: initial_user_phys.y, angle: initial_user_phys.angle, v: initial_user_phys.v, w: initial_user_phys.w};
-    user_virt = {x: initial_user_virt.x, y: initial_user_virt.y, angle: initial_user_virt.angle, v: initial_user_virt.v, w: initial_user_virt.w};
-    is_paused = false;
-    path_phys = [{ x: user_phys.x, y: user_phys.y }];
-    path_virt = [{ x: user_virt.x, y: user_virt.y }];
-    drawVirt();
-    drawPhys();
-}
-
-// Set up WebSocket connection to local Python server
-const ws = new WebSocket('ws://localhost:8765');  // Connect to the local Python program
-
-
-// WS Protocol
-function sendStartMsg() {
-    // TODO: Get configuration from user input fields
-
-    // Compose start message
-    const start_msg =
-    {
-        type: "start",
-        physical: {
-            height: 100,
-            width: 100,
-            border: border_phys,
-            obstacle_list: obstacles_phys,
-        },
-        virtual: {
-            height: 200,
-            width: 200,
-            border: border_virt,
-            obstacle_list: obstacles_virt,
+function checkCollisions(walkerPosition, obstacles) {
+    for (const obstacle of obstacles) {
+        if (pointInPolygon(walkerPosition, obstacle)) {
+            return true; // Collision detected
         }
-    };
-
-    // Send start message
-    ws.send(JSON.stringify(start_msg));
-}
-
-function sendRunMsg() {
-    // TODO: need_reset detection
-    let need_reset = false;
-
-    const run_msg = {
-        type: "running",
-        physical: {
-            user_x: user_phys.x,
-            user_y: user_phys.y,
-            user_direction: user_phys.angle
-        },
-        virtual: {
-            user_x: user_virt.x,
-            user_y: user_virt.y,
-            user_direction: user_virt.angle
-        },
-        user_v: user_virt.v,
-        user_w: user_virt.w,
-        delta_t: delta_t,
-        need_reset: need_reset
-    };
-    if(!is_paused){
-        ws.send(JSON.stringify(run_msg));
-    }else{
-        in_pause_msg = run_msg;
     }
+    return false; // No collisions
 }
 
-function sendEndMsg() {
-    const end_msg = {
-        type: "end",
-    };
-    ws.send(JSON.stringify(end_msg));
-}
 
 // Walk simulation
 function walk() {
@@ -333,6 +263,106 @@ function walk() {
     return true;
 }
 
+// -------------------------------- WebSocket ------------------------------
+
+let ws_time = 0;
+let all_time = 0;
+let has_start = false;
+let is_paused = false;
+let in_pause_msg = {};
+
+function start(){
+    if (!has_start){
+        sendStartMsg();
+        has_start = true;
+    }else{
+        if(is_paused){
+            ws.send(JSON.stringify(in_pause_msg));
+        }
+        is_paused = false;
+    }
+}
+
+function pause(){
+    is_paused = true;
+}
+
+function reset(){
+    sendEndMsg();
+    has_start = false;
+    user_phys = {x: initial_user_phys.x, y: initial_user_phys.y, angle: initial_user_phys.angle, v: initial_user_phys.v, w: initial_user_phys.w};
+    user_virt = {x: initial_user_virt.x, y: initial_user_virt.y, angle: initial_user_virt.angle, v: initial_user_virt.v, w: initial_user_virt.w};
+    is_paused = false;
+    path_phys = [{ x: user_phys.x, y: user_phys.y }];
+    path_virt = [{ x: user_virt.x, y: user_virt.y }];
+    drawVirt();
+    drawPhys();
+}
+
+// Set up WebSocket connection to local Python server
+const ws = new WebSocket('ws://localhost:8765');  // Connect to the local Python program
+
+// WS Protocol
+function sendStartMsg() {
+    // TODO: Get configuration from user input fields
+
+    // Compose start message
+    const start_msg =
+    {
+        type: "start",
+        physical: {
+            height: 100,
+            width: 100,
+            border: border_phys,
+            obstacle_list: obstacles_phys,
+        },
+        virtual: {
+            height: 200,
+            width: 200,
+            border: border_virt,
+            obstacle_list: obstacles_virt,
+        }
+    };
+
+    // Send start message
+    ws.send(JSON.stringify(start_msg));
+}
+
+function sendRunMsg() {
+    // TODO: need_reset detection
+    let need_reset = false;
+
+    const run_msg = {
+        type: "running",
+        physical: {
+            user_x: user_phys.x,
+            user_y: user_phys.y,
+            user_direction: user_phys.angle
+        },
+        virtual: {
+            user_x: user_virt.x,
+            user_y: user_virt.y,
+            user_direction: user_virt.angle
+        },
+        user_v: user_virt.v,
+        user_w: user_virt.w,
+        delta_t: delta_t,
+        need_reset: need_reset
+    };
+    if(!is_paused){
+        ws.send(JSON.stringify(run_msg));
+    }else{
+        in_pause_msg = run_msg;
+    }
+}
+
+function sendEndMsg() {
+    const end_msg = {
+        type: "end",
+    };
+    ws.send(JSON.stringify(end_msg));
+}
+
 ws.onopen = () => {
     console.log('WebSocket connection opened');
     all_time = performance.now();
@@ -358,26 +388,36 @@ ws.onmessage = async (event) => {
             break;
 
         case "running":
-            // Draw user virtual position for this frame
-            if (path_virt.push({ x: user_virt.x, y: user_virt.y }) > MAX_PATH_LEN)
-                path_virt.shift();  // Update virtual path
-            drawVirt();
+            // Up reset counter
+            if (msg.reset) {
+                reset_counter++;
+            }
 
             // Receive user physical position for this frame
             user_phys = { x: msg.user_x, y: msg.user_y, angle: msg.user_direction }
-            if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
-                path_phys.shift();  // Update physical path
-            drawPhys();
+            // Reset detection
+            need_reset = checkCollisions(user_phys, obstacles_phys);
 
-            // New user virtual position for next frame
-            if (!walk()) {
-                // Finish simulation
-                sendEndMsg();
-                break;
+            // Accept this frame
+            if (!need_reset) {
+                if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
+                    path_phys.shift();  // Update physical path
+                drawPhys();
+
+                // Draw user virtual position for this frame
+                if (path_virt.push({ x: user_virt.x, y: user_virt.y }) > MAX_PATH_LEN)
+                    path_virt.shift();  // Update virtual path
+                drawVirt();
+
+                // New user virtual position for next frame
+                if (!walk()) {
+                    // Finish simulation
+                    sendEndMsg();
+                    break;
+                }
+                // Sleep
+                await sleep(delta_t * 1000);
             }
-
-            // Sleep
-            await sleep(delta_t * 1000);
 
             // Send next frame
             sendRunMsg();

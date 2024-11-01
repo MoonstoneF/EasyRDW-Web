@@ -9,36 +9,74 @@
 <body>
     <div class="container">
         <div class="sidebar">
-            <h2>Configuration</h2>
-            <button id="presetVirtualSpace">Preset Virtual Space</button>
-            <button id="presetPhysicalSpace">Preset Physical Space</button>
-            <button id="presetTargets">Preset Targets</button>
-            <button id="uploadConfig">Upload Config</button>
+
+            <div class="config-section">
+                <h2>Configuration</h2>
+                <button id="presetVirtualSpace">Preset Virtual Space</button>
+                <button id="presetPhysicalSpace">Preset Physical Space</button>
+                <button id="presetTargets">Preset Targets</button>
+                <button id="uploadConfig">Upload Config</button>
+                <button id="inputConfig">Input Config</button>
+                <input type="file" id="fileUploadInput" style="display: none;" accept=".json">
+                <div id="inputConfigModal" style="display: none;">
+                    <h3>Enter JSON Configuration</h3>
+                    <textarea id="configInput"></textarea>
+                    <button id="submitConfig">Submit</button>
+                    <button id="closeModal">Close</button>
+                </div>
+            </div>
+            <div class="data-panel">
+                <h3>Data Panel</h3>
+                <div class="data-item">Position: <span id="position">0, 0</span></div>
+                <div class="data-item">Virtual Distance: <span id="virtualDistance">0 m</span></div>
+                <div class="data-item">Physical Distance: <span id="physicalDistance">0 m</span></div>
+                <div class="data-item">Total Resets: <span id="totalResets">0</span></div>
+            </div>
         </div>
         <div class="main-content">
-            <div class="space-display">
-                <h2>Physical Space</h2>
-                <canvas id="physCanvas" width="300" height="300"></canvas>
-            </div>
-            <div class="space-display">
-                <h2>Virtual Space</h2>
-                <canvas id="virtCanvas" width="300" height="300"></canvas>
+            <div class="spaces-container">
+                <div class="space-display">
+                    <h2>Physical Space</h2>
+                    <div class="resizable-canvas-container">
+                        <canvas id="physCanvas"></canvas>
+                    </div>
+                    <div class="scale-bar">
+                        <div class="scale-line">
+                            <div class="scale-tick" style="left: 0%;">0</div>
+                            <div class="scale-tick" style="left: 20%;">1</div>
+                            <div class="scale-tick" style="left: 40%;">2</div>
+                            <div class="scale-tick" style="left: 60%;">3</div>
+                            <div class="scale-tick" style="left: 80%;">4</div>
+                            <div class="scale-tick" style="left: 100%;">5m</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-display">
+                    <h2>Virtual Space</h2>
+                    <div class="resizable-canvas-container">
+                        <canvas id="virtCanvas"></canvas>
+                    </div>
+                    <div class="scale-bar">
+                        <div class="scale-line">
+                            <div class="scale-tick" style="left: 0%;">0</div>
+                            <div class="scale-tick" style="left: 20%;">1</div>
+                            <div class="scale-tick" style="left: 40%;">2</div>
+                            <div class="scale-tick" style="left: 60%;">3</div>
+                            <div class="scale-tick" style="left: 80%;">4</div>
+                            <div class="scale-tick" style="left: 100%;">5m</div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="controls">
                 <button id="startButton" onclick="start()">Start</button>
                 <button id="pauseButton" onclick="pause()">Pause</button>
                 <button id="resetButton" onclick="reset()">Reset</button>
+                <button id="downloadData">Download Data</button>
             </div>
         </div>
-        <div class="data-panel">
-            <h2>Data</h2>
-            <p><strong>Position:</strong> <span id="position">x: 0, y: 0</span></p>
-            <p><strong>Orientation:</strong> <span id="orientation">0°</span></p>
-            <p><strong>Speed:</strong> <span id="speed">0</span></p>
-        </div>
-    </div>
-
     <!-- 引用外部的JS文件 -->
     <script src="script/drawUser.js"></script>
+    </div>
 </body>
 </html>
