@@ -1,0 +1,97 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f4f4f9;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 200px 1fr 250px;
+    gap: 20px;
+    width: 90%;
+    max-width: 1200px;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.sidebar {
+    background-color: #e9efff;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.sidebar h2, .data-panel h2 {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
+.sidebar button, .controls button {
+    display: block;
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    font-size: 1em;
+    background-color: #4c9ff0;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.sidebar button:hover, .controls button:hover {
+    background-color: #397bb3;
+}
+
+.main-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.space-display {
+    position: relative;
+    width: 100%;
+}
+
+.space-display h3 {
+    text-align: center;
+    margin-bottom: 5px;
+    font-size: 1.1em;
+}
+
+#userCanvas {
+    width: 100%;
+    height: auto;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #eef2f7;
+}
+
+.controls {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 0;
+}
+
+.data-panel {
+    background-color: #fdfdfd;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.data-panel p {
+    margin: 8px 0;
+}
