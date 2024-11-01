@@ -20,8 +20,10 @@ let obstacles_phys = [
 let obstacles_virt = []
 
 // User position and path in both environemnts
-let user_phys = { x: 50, y: 50, angle: 0, v: 0, w: 0 };  // Initial user state
-let user_virt = { x: 50, y: 50, angle: 0, v: 0, w: 0 };
+let initial_user_phys = { x: 50, y: 50, angle: 0, v: 0, w: 0 };  // Initial user state
+let initial_user_virt = { x: 50, y: 50, angle: 0, v: 0, w: 0 };
+let user_phys = { x: initial_user_phys.x, y: initial_user_phys.y, angle: initial_user_phys.angle, v: initial_user_phys.v, w: initial_user_phys.w };
+let user_virt = { x: initial_user_virt.x, y: initial_user_virt.y, angle: initial_user_virt.angle, v: initial_user_virt.v, w: initial_user_virt.w };
 let path_phys = [{ x: user_phys.x, y: user_phys.y }];
 let path_virt = [{ x: user_virt.x, y: user_virt.y }];
 
@@ -162,7 +164,6 @@ function pointInPolygon(point, vertices) {
     for (let i = 0, j = n - 1; i < n; j = i++) {
         const xi = vertices[i].x, yi = vertices[i].y;
         const xj = vertices[j].x, yj = vertices[j].y;
-
         const intersect = ((yi > point.y) !== (yj > point.y)) &&
             (point.x < (xj - xi) * (point.y - yi) / (yj - yi) + xi);
         if (intersect) inside = !inside;
@@ -266,6 +267,37 @@ function walk() {
 
 let ws_time = 0;
 let all_time = 0;
+let has_start = false;
+let is_paused = false;
+let in_pause_msg = {};
+
+function start(){
+    if (!has_start){
+        sendStartMsg();
+        has_start = true;
+    }else{
+        if(is_paused){
+            ws.send(JSON.stringify(in_pause_msg));
+        }
+        is_paused = false;
+    }
+}
+
+function pause(){
+    is_paused = true;
+}
+
+function reset(){
+    sendEndMsg();
+    has_start = false;
+    user_phys = {x: initial_user_phys.x, y: initial_user_phys.y, angle: initial_user_phys.angle, v: initial_user_phys.v, w: initial_user_phys.w};
+    user_virt = {x: initial_user_virt.x, y: initial_user_virt.y, angle: initial_user_virt.angle, v: initial_user_virt.v, w: initial_user_virt.w};
+    is_paused = false;
+    path_phys = [{ x: user_phys.x, y: user_phys.y }];
+    path_virt = [{ x: user_virt.x, y: user_virt.y }];
+    drawVirt();
+    drawPhys();
+}
 
 // Set up WebSocket connection to local Python server
 const ws = new WebSocket('ws://localhost:8765');  // Connect to the local Python program
@@ -297,6 +329,9 @@ function sendStartMsg() {
 }
 
 function sendRunMsg() {
+    // TODO: need_reset detection
+    let need_reset = false;
+
     const run_msg = {
         type: "running",
         physical: {
@@ -314,8 +349,11 @@ function sendRunMsg() {
         delta_t: delta_t,
         need_reset: need_reset
     };
-
-    ws.send(JSON.stringify(run_msg));
+    if(!is_paused){
+        ws.send(JSON.stringify(run_msg));
+    }else{
+        in_pause_msg = run_msg;
+    }
 }
 
 function sendEndMsg() {
@@ -328,12 +366,16 @@ function sendEndMsg() {
 ws.onopen = () => {
     console.log('WebSocket connection opened');
     all_time = performance.now();
-
+    drawVirt();
+    drawPhys();
     // Send simulation start message and setup info
-    sendStartMsg();
+    // sendStartMsg();
 };
 
 ws.onmessage = async (event) => {
+    if(!has_start){
+        return;
+    }
     let t1 = performance.now();
 
     msg = JSON.parse(event.data);
@@ -383,8 +425,11 @@ ws.onmessage = async (event) => {
 
         case "end":
             // end simulation
-            ws.close();
-            return;
+            // ws.close();
+            let all_time2 = performance.now();
+            console.log("all: ", all_time2 - all_time, "walk and draw: ", ws_time, "rest: ", all_time2 - all_time - ws_time);
+            break;
+            // return;
     }
     let t2 = performance.now()
     ws_time += (t2 - t1);
@@ -392,6 +437,5 @@ ws.onmessage = async (event) => {
 
 ws.onclose = () => {
     console.log('WebSocket connection closed');
-    let all_time2 = performance.now();
-    console.log("all: ", all_time2 - all_time, "walk and draw: ", ws_time, "rest: ", all_time2 - all_time - ws_time);
+    
 };
