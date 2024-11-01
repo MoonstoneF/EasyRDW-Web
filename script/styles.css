@@ -31,12 +31,14 @@ body {
     padding: 10px;
 }
 
-.sidebar h2, .data-panel h2 {
+.sidebar h2,
+.data-panel h2 {
     font-size: 1.2em;
     margin-bottom: 10px;
 }
 
-.sidebar button, .controls button {
+.sidebar button,
+.controls button {
     display: block;
     width: 100%;
     padding: 8px;
@@ -49,7 +51,8 @@ body {
     cursor: pointer;
 }
 
-.sidebar button:hover, .controls button:hover {
+.sidebar button:hover,
+.controls button:hover {
     background-color: #397bb3;
 }
 

@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>User Position Tracking</title>
     <!-- 引用外部的CSS文件 -->
     <link rel="stylesheet" href="script/styles.css">
 </head>
+
 <body>
     <div class="container">
         <div class="sidebar">
@@ -72,11 +74,12 @@
                 <button id="startButton" onclick="start()">Start</button>
                 <button id="pauseButton" onclick="pause()">Pause</button>
                 <button id="resetButton" onclick="reset()">Reset</button>
-                <button id="downloadData">Download Data</button>
+                <button id="downloadData" onclick="downloadData()">Download Data</button>
             </div>
         </div>
-    <!-- 引用外部的JS文件 -->
-    <script src="script/drawUser.js"></script>
+        <!-- 引用外部的JS文件 -->
+        <script src="script/drawUser.js"></script>
     </div>
 </body>
+
 </html>

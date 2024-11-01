@@ -38,7 +38,8 @@ let turn_speed = 0.1;   // radius/frame
 // TODO: Log more user info
 let need_reset = false;
 let reset_counter = 0;
-let total_distance = 0;
+let distance_phys = 0;
+let distance_virt = 0;
 
 // ---------------------------- Draw functions ----------------------------
 
@@ -195,7 +196,7 @@ function walk() {
         y: target_poi.y - user_virt.y
     };
 
-    const distance = Math.sqrt(target_direction.x ** 2 + target_direction.y ** 2);
+    const target_distance = Math.sqrt(target_direction.x ** 2 + target_direction.y ** 2);
     const target_angle = Math.atan2(target_direction.y, target_direction.x); // Angle to the target
 
     // Check if the walker is rotating or moving
@@ -233,13 +234,16 @@ function walk() {
             // console.log(`Finished rotating towards POI: ${JSON.stringify(target_poi)}`);
         }
     }
+    // Not rotating
     else {
-        // Move towards the target POI if not rotating
-        if (distance > walk_speed) {
+        // Move towards next target POI
+        if (target_distance > walk_speed) {
             const normalizedDirection = {
-                x: target_direction.x / distance,
-                y: target_direction.y / distance
+                x: target_direction.x / target_distance,
+                y: target_direction.y / target_distance
             };
+
+            distance_virt += Math.sqrt(normalizedDirection.x ** 2 + normalizedDirection.y ** 2) * walk_speed;
 
             user_virt.x += normalizedDirection.x * walk_speed;
             user_virt.y += normalizedDirection.y * walk_speed;
@@ -248,6 +252,8 @@ function walk() {
             user_virt.w = 0;
         }
         else {
+            distance_virt += Math.sqrt((target_poi.x - user_virt.x) ** 2 + (target_poi.y - user_virt.y) ** 2);
+
             // Move to the target POI
             user_virt.x = target_poi.x;
             user_virt.y = target_poi.y;
@@ -263,6 +269,40 @@ function walk() {
     return true;
 }
 
+// ------------------------------ Buttons -------------------------------
+
+function start() {
+    if (!has_start) {
+        sendStartMsg();
+        has_start = true;
+    }
+}
+
+function pause() {
+    if (is_paused) {
+        ws.send(JSON.stringify(in_pause_msg));
+    }
+    is_paused = !is_paused;
+}
+
+function reset() {
+    sendEndMsg();
+    has_start = false;
+    user_phys = { x: initial_user_phys.x, y: initial_user_phys.y, angle: initial_user_phys.angle, v: initial_user_phys.v, w: initial_user_phys.w };
+    user_virt = { x: initial_user_virt.x, y: initial_user_virt.y, angle: initial_user_virt.angle, v: initial_user_virt.v, w: initial_user_virt.w };
+    is_paused = false;
+    path_phys = [{ x: user_phys.x, y: user_phys.y }];
+    path_virt = [{ x: user_virt.x, y: user_virt.y }];
+    poi_index = 0;
+    drawVirt();
+    drawPhys();
+}
+
+function downloadData() {
+
+}
+
+
 // -------------------------------- WebSocket ------------------------------
 
 let ws_time = 0;
@@ -270,34 +310,6 @@ let all_time = 0;
 let has_start = false;
 let is_paused = false;
 let in_pause_msg = {};
-
-function start(){
-    if (!has_start){
-        sendStartMsg();
-        has_start = true;
-    }else{
-        if(is_paused){
-            ws.send(JSON.stringify(in_pause_msg));
-        }
-        is_paused = false;
-    }
-}
-
-function pause(){
-    is_paused = true;
-}
-
-function reset(){
-    sendEndMsg();
-    has_start = false;
-    user_phys = {x: initial_user_phys.x, y: initial_user_phys.y, angle: initial_user_phys.angle, v: initial_user_phys.v, w: initial_user_phys.w};
-    user_virt = {x: initial_user_virt.x, y: initial_user_virt.y, angle: initial_user_virt.angle, v: initial_user_virt.v, w: initial_user_virt.w};
-    is_paused = false;
-    path_phys = [{ x: user_phys.x, y: user_phys.y }];
-    path_virt = [{ x: user_virt.x, y: user_virt.y }];
-    drawVirt();
-    drawPhys();
-}
 
 // Set up WebSocket connection to local Python server
 const ws = new WebSocket('ws://localhost:8765');  // Connect to the local Python program
@@ -349,9 +361,9 @@ function sendRunMsg() {
         delta_t: delta_t,
         need_reset: need_reset
     };
-    if(!is_paused){
+    if (!is_paused) {
         ws.send(JSON.stringify(run_msg));
-    }else{
+    } else {
         in_pause_msg = run_msg;
     }
 }
@@ -373,7 +385,7 @@ ws.onopen = () => {
 };
 
 ws.onmessage = async (event) => {
-    if(!has_start){
+    if (!has_start) {
         return;
     }
     let t1 = performance.now();
@@ -391,9 +403,11 @@ ws.onmessage = async (event) => {
             // Up reset counter
             if (msg.reset) {
                 reset_counter++;
+                console.log("Reset: ", reset_counter);
             }
-
-            // Receive user physical position for this frame
+            // Calc distance
+            distance_phys += Math.sqrt((msg.user_x - user_phys.x) ** 2 + (msg.user_y - user_phys.y) ** 2);
+            // Update user physcial position
             user_phys = { x: msg.user_x, y: msg.user_y, angle: msg.user_direction }
             // Reset detection
             need_reset = checkCollisions(user_phys, obstacles_phys);
@@ -429,7 +443,7 @@ ws.onmessage = async (event) => {
             let all_time2 = performance.now();
             console.log("all: ", all_time2 - all_time, "walk and draw: ", ws_time, "rest: ", all_time2 - all_time - ws_time);
             break;
-            // return;
+        // return;
     }
     let t2 = performance.now()
     ws_time += (t2 - t1);
@@ -437,5 +451,5 @@ ws.onmessage = async (event) => {
 
 ws.onclose = () => {
     console.log('WebSocket connection closed');
-    
+
 };
