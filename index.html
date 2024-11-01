@@ -133,7 +133,8 @@
         // 下载数据按钮响应
         downloadDataButton.addEventListener("click", () => {
             const data = {
-                position: document.getElementById("position").innerText,
+                virtualPosition: document.getElementById("virtualPosition").innerText,
+                physicalPosition: document.getElementById("physicalPosition").innerText,
                 virtualDistance: document.getElementById("virtualDistance").innerText,
                 physicalDistance: document.getElementById("physicalDistance").innerText,
                 totalResets: document.getElementById("totalResets").innerText,

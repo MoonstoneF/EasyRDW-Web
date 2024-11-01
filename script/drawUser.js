@@ -1,6 +1,7 @@
 // Misc
 const MAX_PATH_LEN = 1000;
 const delta_t = 0.02;
+const px_per_meter = 5 / 200;
 let scale_phys = 1;
 let scale_virt = 1;
 
@@ -8,31 +9,51 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Environments
 const canvas_phys = document.getElementById('physCanvas');
 const canvas_virt = document.getElementById('virtCanvas');
-let border_phys = [{ x: 0, y: 0 }, { x: 0, y: 100 }, { x: 100, y: 0 }, { x: 100, y: 100 }];
-let border_virt = [{ x: 0, y: 0 }, { x: 0, y: 200 }, { x: 200, y: 0 }, { x: 200, y: 200 }];
-let obstacles_phys = [
-    [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 40, y: 40 }, { x: 40, y: 20 }],
-    [{ x: 60, y: 60 }, { x: 60, y: 80 }, { x: 80, y: 80 }, { x: 80, y: 60 }]
-];
-let obstacles_virt = []
+
+// ---------------------------- Config ---------------------------
+
+let config = {
+    // Environments
+    border_phys: [{ x: 0, y: 0 }, { x: 0, y: 100 }, { x: 100, y: 0 }, { x: 100, y: 100 }],
+    border_virt: [{ x: 0, y: 0 }, { x: 0, y: 200 }, { x: 200, y: 0 }, { x: 200, y: 200 }],
+    obstacles_phys: [
+        [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 40, y: 40 }, { x: 40, y: 20 }],
+        [{ x: 60, y: 60 }, { x: 60, y: 80 }, { x: 80, y: 80 }, { x: 80, y: 60 }]
+    ],
+    obstacles_virt: [],
+
+    // User config
+    poi: [{ x: 50, y: 150 }, { x: 150, y: 150 }, { x: 150, y: 50 }, { x: 50, y: 50 }],
+    walk_speed: 1,    // pixel/frame
+    turn_speed: 0.1,   // radius/frame
+
+    // User position and path in both environemnts
+    initial_user_phys: { x: 50, y: 50, angle: 0, v: 0, w: 0 },  // Initial user state
+    initial_user_virt: { x: 50, y: 50, angle: 0, v: 0, w: 0 },
+}
+
+// Environments
+let border_phys = config.border_phys;
+let border_virt = config.border_virt;
+let obstacles_phys = config.obstacles_phys;
+let obstacles_virt = config.obstacles_virt;
+
+// User config
+let poi = config.poi;
+let poi_index = 0;
+let walk_speed = config.walk_speed;    // pixel/frame
+let turn_speed = config.turn_speed;   // radius/frame
+let is_rotating = false;
 
 // User position and path in both environemnts
-let initial_user_phys = { x: 50, y: 50, angle: 0, v: 0, w: 0 };  // Initial user state
-let initial_user_virt = { x: 50, y: 50, angle: 0, v: 0, w: 0 };
+let initial_user_phys = config.initial_user_phys;  // Initial user state
+let initial_user_virt = config.initial_user_virt;
 let user_phys = { x: initial_user_phys.x, y: initial_user_phys.y, angle: initial_user_phys.angle, v: initial_user_phys.v, w: initial_user_phys.w };
 let user_virt = { x: initial_user_virt.x, y: initial_user_virt.y, angle: initial_user_virt.angle, v: initial_user_virt.v, w: initial_user_virt.w };
 let path_phys = [{ x: user_phys.x, y: user_phys.y }];
 let path_virt = [{ x: user_virt.x, y: user_virt.y }];
-
-// User config
-let poi = [{ x: 50, y: 150 }, { x: 150, y: 150 }, { x: 150, y: 50 }, { x: 50, y: 50 }]
-let poi_index = 0;
-let is_rotating = false;
-let walk_speed = 1;    // pixel/frame
-let turn_speed = 0.1;   // radius/frame
 
 // User log info
 // TODO: Log more user info
@@ -153,10 +174,12 @@ function drawVirt() {
 
 // Function to update the HTML with variable values
 function writeText() {
-    document.getElementById('virtualPosition').textContent = JSON.stringify(user_virt);
-    document.getElementById('physicalPosition').textContent = JSON.stringify(user_phys);
-    document.getElementById('virtualDistance').textContent = distance_virt + ' m';
-    document.getElementById('physicalDistance').textContent = distance_phys + ' m';
+    document.getElementById('virtualPosition').textContent =
+        `x: ${(user_virt.x * px_per_meter).toFixed(2)} m, y: ${(user_virt.x * px_per_meter).toFixed(2)} m, angle: ${user_virt.angle.toFixed(2)}`;
+    document.getElementById('physicalPosition').textContent =
+        `x: ${(user_phys.x * px_per_meter).toFixed(2)} m, y: ${(user_phys.x * px_per_meter).toFixed(2)} m, angle: ${user_phys.angle.toFixed(2)}`;
+    document.getElementById('virtualDistance').textContent = distance_virt.toFixed(2) + ' m';
+    document.getElementById('physicalDistance').textContent = distance_phys.toFixed(2) + ' m';
     document.getElementById('totalResets').textContent = reset_cnt;
 }
 
