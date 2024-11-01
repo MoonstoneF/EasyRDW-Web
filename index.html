@@ -1,17 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <title>User Position Tracking</title>
-    <!-- 引用外部的CSS文件 -->
-    <link rel="stylesheet" href="script/styles.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
     <div class="container">
         <div class="sidebar">
-
             <div class="config-section">
                 <h2>Configuration</h2>
                 <button id="presetVirtualSpace">Preset Virtual Space</button>
@@ -71,15 +67,78 @@
                 </div>
             </div>
             <div class="controls">
-                <button id="startButton" onclick="start()">Start</button>
-                <button id="pauseButton" onclick="pause()">Pause</button>
-                <button id="resetButton" onclick="reset()">Reset</button>
-                <button id="downloadData" onclick="downloadData()">Download Data</button>
+                <button id="startButton">Start</button>
+                <button id="pauseButton">Pause</button>
+                <button id="resetButton">Reset</button>
+                <button id="downloadData">Download Data</button>
             </div>
         </div>
-        <!-- 引用外部的JS文件 -->
-        <script src="script/drawUser.js"></script>
     </div>
-</body>
 
+    <script>
+        // 获取按钮和元素
+        const uploadConfigButton = document.getElementById("uploadConfig");
+        const inputConfigButton = document.getElementById("inputConfig");
+        const downloadDataButton = document.getElementById("downloadData");
+        const fileUploadInput = document.getElementById("fileUploadInput");
+        const inputConfigModal = document.getElementById("inputConfigModal");
+        const configInput = document.getElementById("configInput");
+        const submitConfigButton = document.getElementById("submitConfig");
+        const closeModalButton = document.getElementById("closeModal");
+
+        // 上传配置按钮响应
+        uploadConfigButton.addEventListener("click", () => {
+            fileUploadInput.click();
+        });
+
+        fileUploadInput.addEventListener("change", (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const configData = JSON.parse(e.target.result);
+                    console.log("Uploaded Config:", configData);
+                    // 此处可以添加代码，将配置数据应用到程序中
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // 输入配置按钮响应
+        inputConfigButton.addEventListener("click", () => {
+            inputConfigModal.style.display = "block";
+        });
+
+        submitConfigButton.addEventListener("click", () => {
+            const configData = configInput.value;
+            try {
+                const parsedConfig = JSON.parse(configData);
+                console.log("Input Config:", parsedConfig);
+                // 此处可以添加代码，将解析后的配置数据应用到程序中
+            } catch (error) {
+                alert("Invalid JSON format");
+            }
+            inputConfigModal.style.display = "none";
+        });
+
+        closeModalButton.addEventListener("click", () => {
+            inputConfigModal.style.display = "none";
+        });
+
+        // 下载数据按钮响应
+        downloadDataButton.addEventListener("click", () => {
+            const data = {
+                position: document.getElementById("position").innerText,
+                virtualDistance: document.getElementById("virtualDistance").innerText,
+                physicalDistance: document.getElementById("physicalDistance").innerText,
+                totalResets: document.getElementById("totalResets").innerText,
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+            const downloadAnchor = document.createElement("a");
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "user_data.json");
+            downloadAnchor.click();
+        });
+    </script>
+</body>
 </html>
