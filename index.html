@@ -118,7 +118,15 @@
             const configData = configInput.value;
             try {
                 const parsedConfig = JSON.parse(configData);
-                console.log("Input Config:", parsedConfig);
+                
+                // 将输入的米转换为像素
+                for (const key in parsedConfig) {
+                    if (typeof parsedConfig[key] === 'number') {
+                        parsedConfig[key] = parsedConfig[key] * 40; // 转换为像素
+                    }
+                }
+
+                console.log("Input Config (in pixels):", parsedConfig);
                 // 此处可以添加代码，将解析后的配置数据应用到程序中
             } catch (error) {
                 alert("Invalid JSON format");
