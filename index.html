@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>User Position Tracking</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="script/styles.css">
 </head>
+
 <body>
     <div class="container">
         <div class="sidebar">
@@ -19,7 +21,8 @@
             </div>
             <div class="data-panel">
                 <h3>Data Panel</h3>
-                <div class="data-item">Position: <span id="position">0, 0</span></div>
+                <div class="data-item">Virtual Position: <span id="virtualPosition">(0, 0)</span></div>
+                <div class="data-item">Physical Position: <span id="physicalPosition">(0, 0)</span></div>
                 <div class="data-item">Virtual Distance: <span id="virtualDistance">0 m</span></div>
                 <div class="data-item">Physical Distance: <span id="physicalDistance">0 m</span></div>
                 <div class="data-item">Total Resets: <span id="totalResets">0</span></div>
@@ -61,9 +64,9 @@
                 </div>
             </div>
             <div class="controls">
-                <button id="startButton">Start</button>
-                <button id="pauseButton">Pause</button>
-                <button id="resetButton">Reset</button>
+                <button id="startButton" onclick="start()">Start</button>
+                <button id="pauseButton" onclick="pause()">Pause</button>
+                <button id="resetButton" onclick="reset()">Reset</button>
                 <button id="downloadData">Download Data</button>
             </div>
         </div>
@@ -74,52 +77,13 @@
         <div class="modal-content">
             <span id="closeModalButton" class="close-button">&times;</span>
             <h3>input configuration</h3>
-            <textarea id="configInput" rows="20" cols="50">{
-                "border_phys": [
-                { "x": , "y":  },
-                { "x": , "y":  },
-                { "x": , "y":  },
-                { "x": , "y":  }
-                ],
-                "border_virt": [
-                { "x": , "y":  },
-                { "x": , "y":  },
-                { "x": , "y":  },
-                { "x": , "y":  }
-                ],
-                "obstacles_phys": [
-                [
-                { "x": , "y":  },
-                { "x": , "y":  },
-                { "x": , "y":  },
-                { "x": , "y":  }
-                ],
-                [
-                { "x": , "y":  },
-                { "x": , "y":  },
-                { "x": , "y":  },
-                { "x": , "y":  }
-                ]
-                ],
-                "obstacles_virt": [],
-                "poi": [
-                    { "x": , "y":  },
-                    { "x": , "y":  },
-                    { "x": , "y":  },
-                    { "x": , "y":  }
-                ],
-                "walk_speed": ,
-                "turn_speed": ,
-                "initial_user_phys": {
-                    "x": , "y": , "angle": , "v": , "w": 
-                },
-                "initial_user_virt": {
-                    "x": , "y": , "angle": , "v": , "w": 
-                }
-            }</textarea>
+            <textarea id="configInput" rows="20" cols="50">
+
+            </textarea>
             <button id="submitConfigButton">Commit configuration</button>
         </div>
     </div>
+
     <script src="script/drawUser.js"></script>
 
     <script>
@@ -145,27 +109,9 @@
                 reader.onload = function (e) {
                     try {
                         const configData = JSON.parse(e.target.result);
-                        function convertCoordsToPixels(coords) {
-                            return coords.map(point => ({
-                                x: point.x * 40,
-                                y: point.y * 40
-                            }));
-                        }
-                        configData.border_phys = convertCoordsToPixels(configData.border_phys);
-                        configData.border_virt = convertCoordsToPixels(configData.border_virt);
-                        configData.obstacles_phys = configData.obstacles_phys.map(obstacle => 
-                            convertCoordsToPixels(obstacle)
-                        );
-                        if (configData.obstacles_virt.length) {
-                            configData.obstacles_virt = configData.obstacles_virt.map(obstacle => 
-                                convertCoordsToPixels(obstacle)
-                            );
-                        }
-                        configData.poi = convertCoordsToPixels(configData.poi);
-                        configData.initial_user_phys.v *= 40 / 50;
-                        configData.initial_user_virt.v *= 40 / 50;
-
-                        console.log("Uploaded Config (in pixels):", configData);
+                        config = convertConfigToPixels(configData);
+                        console.log("Uploaded Config (in pixels):", config);
+                        updateView();
                     } catch (error) {
                         alert("Invalid JSON format");
                     }
@@ -177,32 +123,17 @@
         // 打开输入配置的模态框
         inputConfigButton.addEventListener("click", () => {
             inputConfigModal.style.display = "block";
+            configInput.value = JSON.stringify(convertConfigToCoords(config), undefined, 4);
         });
-        
+
         // 提交输入的配置数据
         submitConfigButton.addEventListener("click", () => {
             const configData = configInput.value;
             try {
                 const parsedConfig = JSON.parse(configData);
-                function convertCoordsToPixels(coords) {
-                    return coords.map(point => ({
-                        x: point.x * 40,
-                        y: point.y * 40
-                    }));
-                }
-                parsedConfig.border_phys = convertCoordsToPixels(parsedConfig.border_phys);
-                parsedConfig.border_virt = convertCoordsToPixels(parsedConfig.border_virt);
-                parsedConfig.obstacles_phys = parsedConfig.obstacles_phys.map(obstacle => 
-                    convertCoordsToPixels(obstacle)
-                );
-                if (parsedConfig.obstacles_virt.length) {
-                    parsedConfig.obstacles_virt = parsedConfig.obstacles_virt.map(obstacle => 
-                        convertCoordsToPixels(obstacle));
-                }
-                parsedConfig.poi = convertCoordsToPixels(parsedConfig.poi);
-                parsedConfig.initial_user_phys.v *= 40 / 50;
-                parsedConfig.initial_user_virt.v *= 40 / 50;
-                console.log("Input Config (in pixels):", parsedConfig);
+                config = convertConfigToPixels(parsedConfig);
+                console.log("Input Config (in pixels):", config);
+                updateView();
             } catch (error) {
                 alert("Invalid JSON format");
             }
@@ -231,4 +162,5 @@
         });
     </script>
 </body>
+
 </html>

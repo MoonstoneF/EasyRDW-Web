@@ -34,33 +34,93 @@ let config = {
     initial_user_virt: { x: 50, y: 50, angle: 0, v: 0, w: 0 },
 }
 
-// Environments
-let border_phys = config.border_phys;
-let border_virt = config.border_virt;
-let obstacles_phys = config.obstacles_phys;
-let obstacles_virt = config.obstacles_virt;
-
-// User config
-let poi = config.poi;
 let poi_index = 0;
-let walk_speed = config.walk_speed;    // pixel/frame
-let turn_speed = config.turn_speed;   // radius/frame
 let is_rotating = false;
 
-// User position and path in both environemnts
-let initial_user_phys = config.initial_user_phys;  // Initial user state
-let initial_user_virt = config.initial_user_virt;
-let user_phys = { x: initial_user_phys.x, y: initial_user_phys.y, angle: initial_user_phys.angle, v: initial_user_phys.v, w: initial_user_phys.w };
-let user_virt = { x: initial_user_virt.x, y: initial_user_virt.y, angle: initial_user_virt.angle, v: initial_user_virt.v, w: initial_user_virt.w };
+let user_phys = { x: config.initial_user_phys.x, y: config.initial_user_phys.y, angle: config.initial_user_phys.angle, v: config.initial_user_phys.v, w: config.initial_user_phys.w };
+let user_virt = { x: config.initial_user_phys.x, y: config.initial_user_phys.y, angle: config.initial_user_phys.angle, v: config.initial_user_phys.v, w: config.initial_user_phys.w };
 let path_phys = [{ x: user_phys.x, y: user_phys.y }];
 let path_virt = [{ x: user_virt.x, y: user_virt.y }];
 
 // User log info
-// TODO: Log more user info
 let need_reset = false;
 let reset_cnt = 0;
 let distance_phys = 0;
 let distance_virt = 0;
+
+// ---------------------------- Pixel-meter conversion ----------------------
+
+function convertCoordsToPixels(coords) {
+    return coords.map(point => ({
+        x: point.x / px_per_meter,
+        y: point.y / px_per_meter
+    }));
+}
+
+function convertPixelsToCoords(pixels) {
+    return pixels.map(point => ({
+        x: point.x * px_per_meter,
+        y: point.y * px_per_meter
+    }));
+}
+
+function convertConfigToPixels(configData) {
+    let convertedConfig = {};
+    convertedConfig.border_phys = convertCoordsToPixels(configData.border_phys);
+    convertedConfig.border_virt = convertCoordsToPixels(configData.border_virt);
+    convertedConfig.obstacles_phys = configData.obstacles_phys.map(obstacle =>
+        convertCoordsToPixels(obstacle)
+    );
+    convertedConfig.obstacles_virt = configData.obstacles_virt.map(obstacle =>
+        convertCoordsToPixels(obstacle)
+    );
+
+    convertedConfig.poi = convertCoordsToPixels(configData.poi);
+
+    convertedConfig.initial_user_phys = convertCoordsToPixels([configData.initial_user_phys]);
+    convertedConfig.initial_user_phys.angle = configData.initial_user_phys.angle;
+    convertedConfig.initial_user_phys.v = configData.initial_user_phys.v * (delta_t / px_per_meter);
+    convertedConfig.initial_user_phys.w = configData.initial_user_phys.w * (delta_t);
+
+    convertedConfig.initial_user_virt = convertCoordsToPixels([configData.initial_user_virt]);
+    convertedConfig.initial_user_virt.angle = configData.initial_user_virt.angle;
+    convertedConfig.initial_user_virt.v = configData.initial_user_virt.v * (delta_t / px_per_meter);
+    convertedConfig.initial_user_virt.w = configData.initial_user_virt.w * (delta_t);
+
+    convertedConfig.walk_speed = configData.walk_speed * (delta_t / px_per_meter);
+    convertedConfig.turn_speed = configData.turn_speed * (delta_t);
+
+    return convertedConfig;
+}
+
+function convertConfigToCoords(configData) {
+    let convertedConfig = {};
+    convertedConfig.border_phys = convertPixelsToCoords(configData.border_phys);
+    convertedConfig.border_virt = convertPixelsToCoords(configData.border_virt);
+    convertedConfig.obstacles_phys = configData.obstacles_phys.map(obstacle =>
+        convertPixelsToCoords(obstacle)
+    );
+    convertedConfig.obstacles_virt = configData.obstacles_virt.map(obstacle =>
+        convertPixelsToCoords(obstacle)
+    );
+
+    convertedConfig.poi = convertPixelsToCoords(configData.poi);
+
+    convertedConfig.initial_user_phys = convertPixelsToCoords([configData.initial_user_phys]);
+    convertedConfig.initial_user_phys.angle = configData.initial_user_phys.angle;
+    convertedConfig.initial_user_phys.v = configData.initial_user_phys.v / (delta_t / px_per_meter);
+    convertedConfig.initial_user_phys.w = configData.initial_user_phys.w / (delta_t);
+
+    convertedConfig.initial_user_virt = convertPixelsToCoords([configData.initial_user_virt]);
+    convertedConfig.initial_user_virt.angle = configData.initial_user_virt.angle;
+    convertedConfig.initial_user_virt.v = configData.initial_user_virt.v / (delta_t / px_per_meter);
+    convertedConfig.initial_user_virt.w = configData.initial_user_virt.w / (delta_t);
+
+    convertedConfig.walk_speed = configData.walk_speed / (delta_t / px_per_meter);
+    convertedConfig.turn_speed = configData.turn_speed / (delta_t);
+
+    return convertedConfig;
+}
 
 // ---------------------------- Draw functions ----------------------------
 
@@ -96,6 +156,9 @@ function drawPolygon(ctx, points) {
 
     // Sort clockwise;
     points.sort((a, b) => a.angle - b.angle);
+    points.forEach(point => {
+        delete point.angle;
+    });
 
     ctx.beginPath();
     ctx.moveTo(points[0].x, points[0].y);
@@ -153,7 +216,7 @@ function drawPhys() {
     // Apply Scale
     ctx.scale(scale_phys, scale_phys);
 
-    drawEnvironment(ctx, border_phys, obstacles_phys);
+    drawEnvironment(ctx, config.border_phys, config.obstacles_phys);
     drawUser(ctx, user_phys, path_phys);
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -166,7 +229,7 @@ function drawVirt() {
     // Apply Scale
     ctx.scale(scale_virt, scale_virt);
 
-    drawEnvironment(ctx, border_virt, obstacles_virt);
+    drawEnvironment(ctx, config.border_virt, config.obstacles_virt);
     drawUser(ctx, user_virt, path_virt);
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -211,9 +274,16 @@ function pointInPolygon(point, vertices) {
     return inside;
 }
 
-function checkCollisions(walkerPosition, obstacles) {
+function checkCollisions(walkerPosition, border, obstacles) {
+    if (!pointInPolygon(walkerPosition, border)) {
+        console.log("Collide with border", walkerPosition, border);
+
+        return true;
+    }
     for (const obstacle of obstacles) {
         if (pointInPolygon(walkerPosition, obstacle)) {
+            console.log("Collide with obstacle");
+
             return true; // Collision detected
         }
     }
@@ -223,12 +293,12 @@ function checkCollisions(walkerPosition, obstacles) {
 
 // Walk simulation
 function walk() {
-    if (poi_index >= poi.length) {
+    if (poi_index >= config.poi.length) {
         return false;
     }
 
     // Rotate/walk towards next poi with configured speed
-    const target_poi = poi[poi_index];
+    const target_poi = config.poi[poi_index];
     const target_direction = {
         x: target_poi.x - user_virt.x,
         y: target_poi.y - user_virt.y
@@ -240,23 +310,23 @@ function walk() {
     // Check if the walker is rotating or moving
     if (is_rotating) {
         // Rotate towards the target angle
-        user_virt.w = turn_speed;
+        user_virt.w = config.turn_speed;
         if (Math.abs(user_virt.angle - target_angle) < Math.PI)
             if (user_virt.angle < target_angle) {
-                user_virt.angle += turn_speed;
+                user_virt.angle += config.turn_speed;
             }
             else {
-                user_virt.angle -= turn_speed;
+                user_virt.angle -= config.turn_speed;
             }
         else {
             if (user_virt.angle < target_angle) {
-                user_virt.angle -= turn_speed;
+                user_virt.angle -= config.turn_speed;
                 if (user_virt.angle < - Math.PI) {
                     user_virt.angle += 2 * Math.PI;
                 }
             }
             else {
-                user_virt.angle += turn_speed;
+                user_virt.angle += config.turn_speed;
                 if (user_virt.angle > Math.PI) {
                     user_virt.angle -= 2 * Math.PI;
                 }
@@ -264,9 +334,9 @@ function walk() {
         }
 
         // Turned to target angle
-        if (Math.abs(user_virt.angle - target_angle) < turn_speed) {
+        if (Math.abs(user_virt.angle - target_angle) < config.turn_speed) {
             user_virt.angle = target_angle; // Snap to the target angle
-            user_virt.v = walk_speed;    // Start walking
+            user_virt.v = config.walk_speed;    // Start walking
             user_virt.w = 0;
             is_rotating = false; // Stop rotating
             // console.log(`Finished rotating towards POI: ${JSON.stringify(target_poi)}`);
@@ -275,18 +345,18 @@ function walk() {
     // Not rotating
     else {
         // Move towards next target POI
-        if (target_distance > walk_speed) {
+        if (target_distance > config.walk_speed) {
             const normalizedDirection = {
                 x: target_direction.x / target_distance,
                 y: target_direction.y / target_distance
             };
 
-            distance_virt += Math.sqrt(normalizedDirection.x ** 2 + normalizedDirection.y ** 2) * walk_speed;
+            distance_virt += Math.sqrt(normalizedDirection.x ** 2 + normalizedDirection.y ** 2) * config.walk_speed;
 
-            user_virt.x += normalizedDirection.x * walk_speed;
-            user_virt.y += normalizedDirection.y * walk_speed;
+            user_virt.x += normalizedDirection.x * config.walk_speed;
+            user_virt.y += normalizedDirection.y * config.walk_speed;
             user_virt.angle = target_angle;
-            user_virt.v = walk_speed;
+            user_virt.v = config.walk_speed;
             user_virt.w = 0;
         }
         else {
@@ -297,7 +367,7 @@ function walk() {
             user_virt.y = target_poi.y;
             user_virt.angle = target_angle;
             user_virt.v = 0;
-            user_virt.w = turn_speed;
+            user_virt.w = config.turn_speed;
             is_rotating = true; // Start rotating towards the next POI
 
             console.log(`Arrived at POI: ${JSON.stringify(target_poi)}`);
@@ -326,7 +396,7 @@ function pause() {
 function reset() {
     sendEndMsg();
     has_start = false;
-    user_phys = { x: initial_user_phys.x, y: initial_user_phys.y, angle: initial_user_phys.angle, v: initial_user_phys.v, w: initial_user_phys.w };
+    user_phys = { x: config.initial_user_phys.x, y: config.initial_user_phys.y, angle: config.initial_user_phys.angle, v: config.initial_user_phys.v, w: config.initial_user_phys.w };
     user_virt = { x: initial_user_virt.x, y: initial_user_virt.y, angle: initial_user_virt.angle, v: initial_user_virt.v, w: initial_user_virt.w };
     is_paused = false;
     path_phys = [{ x: user_phys.x, y: user_phys.y }];
@@ -362,14 +432,14 @@ function sendStartMsg() {
         physical: {
             height: 100,
             width: 100,
-            border: border_phys,
-            obstacle_list: obstacles_phys,
+            border: config.border_phys,
+            obstacle_list: config.obstacles_phys,
         },
         virtual: {
             height: 200,
             width: 200,
-            border: border_virt,
-            obstacle_list: obstacles_virt,
+            border: config.border_virt,
+            obstacle_list: config.obstacles_virt,
         }
     };
 
@@ -437,17 +507,21 @@ ws.onmessage = async (event) => {
             if (msg.reset) {
                 reset_cnt++;
                 console.log("Reset: ", reset_cnt);
-            }
-            // Calc distance
-            distance_phys += Math.sqrt((msg.user_x - user_phys.x) ** 2 + (msg.user_y - user_phys.y) ** 2);
-            // Update user physcial position
-            user_phys = { x: msg.user_x, y: msg.user_y, angle: msg.user_direction }
 
-            // Reset detection
-            need_reset = checkCollisions(user_phys, obstacles_phys);
+                need_reset = false;
+            }
+            else {
+                // Calc distance
+                distance_phys += Math.sqrt((msg.user_x - user_phys.x) ** 2 + (msg.user_y - user_phys.y) ** 2);
+
+                // Reset detection
+                need_reset = checkCollisions({ x: msg.user_x, y: msg.user_y }, config.border_phys, config.obstacles_phys);
+            }
 
             // Accept this frame
             if (!need_reset) {
+                // Update user physcial position
+                user_phys = { x: msg.user_x, y: msg.user_y, angle: msg.user_direction }
                 // Update path
                 if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
                     path_phys.shift();
@@ -462,9 +536,10 @@ ws.onmessage = async (event) => {
                     sendEndMsg();
                     break;
                 }
-                // Sleep
-                await sleep(delta_t * 1000);
             }
+
+            // Sleep
+            await sleep(delta_t * 1000);
 
             // Send next frame
             sendRunMsg();
