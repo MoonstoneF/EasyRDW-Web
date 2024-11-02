@@ -101,13 +101,30 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function (e) {
-                    const configData = JSON.parse(e.target.result);
-                    console.log("Uploaded Config:", configData);
-                    // 此处可以添加代码，将配置数据应用到程序中
+                    try {
+                        const configData = JSON.parse(e.target.result);
+                
+                        // 处理上传的配置数据，转换距离到像素
+                        const distanceKeys = ['distance1', 'distance2']; // 假设这两个是以米为单位的距离属性
+                        for (const key in configData) {
+                            if (distanceKeys.includes(key) && typeof configData[key] === 'number') {
+                                configData[key] = configData[key] * 40; // 转换为像素
+                            }
+                            // angle 和 w 不进行转换
+                        }
+
+                        console.log("Uploaded Config (in pixels):", configData);
+                        // 此处可以添加代码，将配置数据应用到程序中
+                    } catch (error) {
+                        alert("Invalid JSON format");
+                    }
                 };
                 reader.readAsText(file);
             }
         });
+
+
+
 
         // 输入配置按钮响应
         inputConfigButton.addEventListener("click", () => {
@@ -120,10 +137,12 @@
                 const parsedConfig = JSON.parse(configData);
                 
                 // 将输入的米转换为像素
+                const distanceKeys = ['distance1', 'distance2']; // 假设这两个是以米为单位的距离属性
                 for (const key in parsedConfig) {
-                    if (typeof parsedConfig[key] === 'number') {
+                    if (distanceKeys.includes(key) && typeof parsedConfig[key] === 'number') {
                         parsedConfig[key] = parsedConfig[key] * 40; // 转换为像素
                     }
+                    // angle 和 w 不进行转换
                 }
 
                 console.log("Input Config (in pixels):", parsedConfig);
