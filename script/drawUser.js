@@ -34,8 +34,21 @@ let config = {
     initial_user_virt: { x: 100, y: 100, angle: 0, v: 0, w: 0 },
 }
 
+// --------------------------------- Inner Variables --------------------------
+
+// 状态机
+const SimState = {
+    before_start: 0,
+    running: 1,
+    paused: 2,
+    finnished: 3,
+}
+let state = SimState.before_start;
+
 let poi_index = 0;
 let is_rotating = false;
+let in_pause_msg = {};
+let need_reset = false;
 
 let user_phys = { x: config.initial_user_phys.x, y: config.initial_user_phys.y, angle: config.initial_user_phys.angle, v: config.initial_user_phys.v, w: config.initial_user_phys.w };
 let user_virt = { x: config.initial_user_phys.x, y: config.initial_user_phys.y, angle: config.initial_user_phys.angle, v: config.initial_user_phys.v, w: config.initial_user_phys.w };
@@ -43,10 +56,28 @@ let path_phys = [{ x: user_phys.x, y: user_phys.y }];
 let path_virt = [{ x: user_virt.x, y: user_virt.y }];
 
 // User log info
-let need_reset = false;
 let reset_cnt = 0;
 let distance_phys = 0;
 let distance_virt = 0;
+
+function init() {
+    state = SimState.before_start;
+
+    poi_index = 0;
+    is_rotating = false;
+    in_pause_msg = {};
+    need_reset = false;
+
+    user_phys = { x: config.initial_user_phys.x, y: config.initial_user_phys.y, angle: config.initial_user_phys.angle, v: config.initial_user_phys.v, w: config.initial_user_phys.w };
+    user_virt = { x: config.initial_user_phys.x, y: config.initial_user_phys.y, angle: config.initial_user_phys.angle, v: config.initial_user_phys.v, w: config.initial_user_phys.w };
+    path_phys = [{ x: user_phys.x, y: user_phys.y }];
+    path_virt = [{ x: user_virt.x, y: user_virt.y }];
+
+    // User log info
+    reset_cnt = 0;
+    distance_phys = 0;
+    distance_virt = 0;
+}
 
 // ---------------------------- Pixel-meter conversion ----------------------
 
@@ -77,12 +108,14 @@ function convertConfigToPixels(configData) {
 
     convertedConfig.poi = convertCoordsToPixels(configData.poi);
 
-    convertedConfig.initial_user_phys = convertCoordsToPixels([configData.initial_user_phys]);
+    convertedConfig.initial_user_phys = convertCoordsToPixels([configData.initial_user_phys])[0];
+    console.log(convertedConfig.initial_user_phys);
+
     convertedConfig.initial_user_phys.angle = configData.initial_user_phys.angle;
     convertedConfig.initial_user_phys.v = configData.initial_user_phys.v * (delta_t / px_per_meter);
     convertedConfig.initial_user_phys.w = configData.initial_user_phys.w * (delta_t);
 
-    convertedConfig.initial_user_virt = convertCoordsToPixels([configData.initial_user_virt]);
+    convertedConfig.initial_user_virt = convertCoordsToPixels([configData.initial_user_virt])[0];
     convertedConfig.initial_user_virt.angle = configData.initial_user_virt.angle;
     convertedConfig.initial_user_virt.v = configData.initial_user_virt.v * (delta_t / px_per_meter);
     convertedConfig.initial_user_virt.w = configData.initial_user_virt.w * (delta_t);
@@ -106,12 +139,12 @@ function convertConfigToCoords(configData) {
 
     convertedConfig.poi = convertPixelsToCoords(configData.poi);
 
-    convertedConfig.initial_user_phys = convertPixelsToCoords([configData.initial_user_phys]);
+    convertedConfig.initial_user_phys = convertPixelsToCoords([configData.initial_user_phys])[0];
     convertedConfig.initial_user_phys.angle = configData.initial_user_phys.angle;
     convertedConfig.initial_user_phys.v = configData.initial_user_phys.v / (delta_t / px_per_meter);
     convertedConfig.initial_user_phys.w = configData.initial_user_phys.w / (delta_t);
 
-    convertedConfig.initial_user_virt = convertPixelsToCoords([configData.initial_user_virt]);
+    convertedConfig.initial_user_virt = convertPixelsToCoords([configData.initial_user_virt])[0];
     convertedConfig.initial_user_virt.angle = configData.initial_user_virt.angle;
     convertedConfig.initial_user_virt.v = configData.initial_user_virt.v / (delta_t / px_per_meter);
     convertedConfig.initial_user_virt.w = configData.initial_user_virt.w / (delta_t);
@@ -301,9 +334,9 @@ function drawVirt() {
 // Function to update the HTML with variable values
 function writeText() {
     document.getElementById('virtualPosition').textContent =
-        `x: ${(user_virt.x * px_per_meter).toFixed(2)} m, y: ${(user_virt.x * px_per_meter).toFixed(2)} m, angle: ${user_virt.angle.toFixed(2)}`;
+        `x: ${(user_virt.x * px_per_meter).toFixed(2)} m, y: ${(user_virt.y * px_per_meter).toFixed(2)} m, angle: ${user_virt.angle.toFixed(2)}`;
     document.getElementById('physicalPosition').textContent =
-        `x: ${(user_phys.x * px_per_meter).toFixed(2)} m, y: ${(user_phys.x * px_per_meter).toFixed(2)} m, angle: ${user_phys.angle.toFixed(2)}`;
+        `x: ${(user_phys.x * px_per_meter).toFixed(2)} m, y: ${(user_phys.y * px_per_meter).toFixed(2)} m, angle: ${user_phys.angle.toFixed(2)}`;
     document.getElementById('virtualDistance').textContent = distance_virt.toFixed(2) + ' m';
     document.getElementById('physicalDistance').textContent = distance_phys.toFixed(2) + ' m';
     document.getElementById('totalResets').textContent = reset_cnt;
@@ -426,14 +459,14 @@ function walk() {
             distance_virt += Math.sqrt((target_poi.x - user_virt.x) ** 2 + (target_poi.y - user_virt.y) ** 2);
 
             // Move to the target POI
+            console.log(`Arrived at POI: ${JSON.stringify(target_poi)}, angle: ${user_virt.angle}, target angle: ${target_angle}`);
+
             user_virt.x = target_poi.x;
             user_virt.y = target_poi.y;
-            user_virt.angle = target_angle;
             user_virt.v = 0;
             user_virt.w = config.turn_speed;
             is_rotating = true; // Start rotating towards the next POI
 
-            console.log(`Arrived at POI: ${JSON.stringify(target_poi)}`);
             poi_index++;
         }
     }
@@ -443,29 +476,30 @@ function walk() {
 // ------------------------------ Buttons -------------------------------
 
 function start() {
-    if (!has_start) {
+    if (state == SimState.before_start) {
         sendStartMsg();
-        has_start = true;
+        state = SimState.running;
     }
 }
 
 function pause() {
-    if (is_paused) {
+    if (state == SimState.running) {
+        state = SimState.paused;
+    }
+    else if (state == SimState.paused) {
+        state = SimState.running;
         ws.send(JSON.stringify(in_pause_msg));
     }
-    is_paused = !is_paused;
 }
 
 function reset() {
-    sendEndMsg();
-    has_start = false;
-    user_phys = { x: config.initial_user_phys.x, y: config.initial_user_phys.y, angle: config.initial_user_phys.angle, v: config.initial_user_phys.v, w: config.initial_user_phys.w };
-    user_virt = { x: initial_user_virt.x, y: initial_user_virt.y, angle: initial_user_virt.angle, v: initial_user_virt.v, w: initial_user_virt.w };
-    is_paused = false;
-    path_phys = [{ x: user_phys.x, y: user_phys.y }];
-    path_virt = [{ x: user_virt.x, y: user_virt.y }];
-    poi_index = 0;
-    updateView();
+    if (state == SimState.running || state == SimState.paused || state == SimState.finnished) {
+        if (state != SimState.finnished) {
+            sendEndMsg();
+        }
+        init();
+        updateView();
+    }
 }
 
 function downloadData() {
@@ -477,30 +511,27 @@ function downloadData() {
 
 let ws_time = 0;
 let all_time = 0;
-let has_start = false;
-let is_paused = false;
-let in_pause_msg = {};
 
 // Set up WebSocket connection to local Python server
 const ws = new WebSocket('ws://localhost:8765');  // Connect to the local Python program
 
 // WS Protocol
 function sendStartMsg() {
-    // TODO: Get configuration from user input fields
-
     // Compose start message
+    bbox_phys = getBoundingBox(config.border_phys);
+    bbox_virt = getBoundingBox(config.border_virt);
     const start_msg =
     {
         type: "start",
         physical: {
-            height: 100,
-            width: 100,
+            height: bbox_phys.height,
+            width: bbox_phys.width,
             border: config.border_phys,
             obstacle_list: config.obstacles_phys,
         },
         virtual: {
-            height: 200,
-            width: 200,
+            height: bbox_virt.height,
+            width: bbox_virt.width,
             border: config.border_virt,
             obstacle_list: config.obstacles_virt,
         }
@@ -528,9 +559,10 @@ function sendRunMsg() {
         delta_t: delta_t,
         need_reset: need_reset
     };
-    if (!is_paused) {
+    if (state == SimState.running) {
         ws.send(JSON.stringify(run_msg));
-    } else {
+    }
+    else if (state == SimState.paused) {
         in_pause_msg = run_msg;
     }
 }
@@ -551,7 +583,7 @@ ws.onopen = () => {
 };
 
 ws.onmessage = async (event) => {
-    if (!has_start) {
+    if (state == SimState.before_start) {
         return;
     }
     let t1 = performance.now();
@@ -597,6 +629,7 @@ ws.onmessage = async (event) => {
                 if (!walk()) {
                     // Finish simulation
                     sendEndMsg();
+                    state = SimState.finnished;
                     break;
                 }
             }
