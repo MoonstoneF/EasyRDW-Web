@@ -16,22 +16,22 @@ const canvas_virt = document.getElementById('virtCanvas');
 
 let config = {
     // Environments
-    border_phys: [{ x: 0, y: 0 }, { x: 0, y: 100 }, { x: 100, y: 0 }, { x: 100, y: 100 }],
-    border_virt: [{ x: 0, y: 0 }, { x: 0, y: 200 }, { x: 200, y: 0 }, { x: 200, y: 200 }],
+    border_phys: [{ x: 0, y: 0 }, { x: 0, y: 200 }, { x: 200, y: 0 }, { x: 200, y: 200 }],
+    border_virt: [{ x: 0, y: 0 }, { x: 0, y: 400 }, { x: 400, y: 0 }, { x: 400, y: 400 }],
     obstacles_phys: [
-        [{ x: 20, y: 20 }, { x: 20, y: 40 }, { x: 40, y: 40 }, { x: 40, y: 20 }],
-        [{ x: 60, y: 60 }, { x: 60, y: 80 }, { x: 80, y: 80 }, { x: 80, y: 60 }]
+        [{ x: 40, y: 40 }, { x: 40, y: 80 }, { x: 80, y: 80 }, { x: 80, y: 40 }],
+        [{ x: 120, y: 120 }, { x: 120, y: 160 }, { x: 160, y: 160 }, { x: 160, y: 120 }]
     ],
     obstacles_virt: [],
 
     // User config
-    poi: [{ x: 50, y: 150 }, { x: 150, y: 150 }, { x: 150, y: 50 }, { x: 50, y: 50 }],
-    walk_speed: 1,    // pixel/frame
+    poi: [{ x: 100, y: 300 }, { x: 300, y: 300 }, { x: 300, y: 100 }, { x: 100, y: 100 }],
+    walk_speed: 2,    // pixel/frame
     turn_speed: 0.1,   // radius/frame
 
     // User position and path in both environemnts
-    initial_user_phys: { x: 50, y: 50, angle: 0, v: 0, w: 0 },  // Initial user state
-    initial_user_virt: { x: 50, y: 50, angle: 0, v: 0, w: 0 },
+    initial_user_phys: { x: 100, y: 100, angle: 0, v: 0, w: 0 },  // Initial user state
+    initial_user_virt: { x: 100, y: 100, angle: 0, v: 0, w: 0 },
 }
 
 let poi_index = 0;
@@ -122,7 +122,54 @@ function convertConfigToCoords(configData) {
     return convertedConfig;
 }
 
+function loadConfig() {
+    const savedConfig = localStorage.getItem('config');
+    if (savedConfig) {
+        config = JSON.parse(savedConfig); // Parse the JSON string back into an object
+    }
+}
+
+// Function to save user configuration to localStorage
+function saveConfig() {
+    localStorage.setItem('config', JSON.stringify(config)); // Convert the object to a JSON string
+}
+
+// Load user configuration when the page loads
+window.onload = loadConfig;
+
 // ---------------------------- Draw functions ----------------------------
+
+function getBoundingBox(polygon) {
+    // Initialize min and max coordinates
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    // Iterate through each vertex of the polygon
+    polygon.forEach(vertex => {
+        if (vertex.x < minX) {
+            minX = vertex.x; // Update minX
+        }
+        if (vertex.y < minY) {
+            minY = vertex.y; // Update minY
+        }
+        if (vertex.x > maxX) {
+            maxX = vertex.x; // Update maxX
+        }
+        if (vertex.y > maxY) {
+            maxY = vertex.y; // Update maxY
+        }
+    });
+
+    // Return the bounding box as an object
+    return {
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY
+    };
+}
 
 function drawPolygon(ctx, points) {
     // Find min max to get center
@@ -171,8 +218,10 @@ function drawPolygon(ctx, points) {
 // Draw environment
 function drawEnvironment(ctx, border, obstacles) {
     // Draw border
+    ctx.fillStyle = "white";
     drawPolygon(ctx, border);
     ctx.stroke();
+    ctx.fill();
 
     // Draw obstacles
     ctx.fillStyle = "red"
@@ -210,29 +259,43 @@ function drawUser(ctx, user, path) {
 }
 
 function drawPhys() {
+    bbox = getBoundingBox(config.border_phys);
+    canvas_phys.width = bbox.width + 2;
+    canvas_phys.height = bbox.height + 2;
+
     ctx = canvas_phys.getContext('2d');
     ctx.clearRect(0, 0, canvas_phys.width, canvas_phys.height);
 
     // Apply Scale
-    ctx.scale(scale_phys, scale_phys);
+    // ctx.scale(scale_phys, scale_phys);
+
+    ctx.save();
+    ctx.translate(1, 1);
 
     drawEnvironment(ctx, config.border_phys, config.obstacles_phys);
     drawUser(ctx, user_phys, path_phys);
 
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.restore();
 }
 
 function drawVirt() {
+    bbox = getBoundingBox(config.border_virt);
+    canvas_virt.width = bbox.width + 2;
+    canvas_virt.height = bbox.height + 2;
+
     ctx = canvas_virt.getContext('2d');
     ctx.clearRect(0, 0, canvas_virt.width, canvas_virt.height);
 
     // Apply Scale
-    ctx.scale(scale_virt, scale_virt);
+    // ctx.scale(scale_virt, scale_virt);
+    ctx.save();
+    ctx.translate(1, 1);
 
     drawEnvironment(ctx, config.border_virt, config.obstacles_virt);
     drawUser(ctx, user_virt, path_virt);
 
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.restore();
+
 }
 
 // Function to update the HTML with variable values

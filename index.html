@@ -32,8 +32,8 @@
             <div class="spaces-container">
                 <div class="space-display">
                     <h2>Physical Space</h2>
-                    <div class="resizable-canvas-container">
-                        <canvas id="physCanvas"></canvas>
+                    <div class="resizable-canvas-container" id="physCanvasContainer">
+                        <canvas id="physCanvas" width="300px" height="300px"></canvas>
                     </div>
                     <div class="scale-bar">
                         <div class="scale-line">
@@ -48,8 +48,8 @@
                 </div>
                 <div class="space-display">
                     <h2>Virtual Space</h2>
-                    <div class="resizable-canvas-container">
-                        <canvas id="virtCanvas"></canvas>
+                    <div class="resizable-canvas-container" id="virtCanvasContainer">
+                        <canvas id="virtCanvas" width="300px" height="300px"></canvas>
                     </div>
                     <div class="scale-bar">
                         <div class="scale-line">
@@ -111,6 +111,7 @@
                         const configData = JSON.parse(e.target.result);
                         config = convertConfigToPixels(configData);
                         console.log("Uploaded Config (in pixels):", config);
+                        saveConfig();
                         updateView();
                     } catch (error) {
                         alert("Invalid JSON format");
@@ -133,6 +134,7 @@
                 const parsedConfig = JSON.parse(configData);
                 config = convertConfigToPixels(parsedConfig);
                 console.log("Input Config (in pixels):", config);
+                saveConfig();
                 updateView();
             } catch (error) {
                 alert("Invalid JSON format");
