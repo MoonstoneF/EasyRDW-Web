@@ -4,10 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <title>User Position Tracking</title>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@3.13.0/brython.min.js"></script>
     <link rel="stylesheet" href="script/styles.css">
 </head>
 
-<body>
+<body onload="brython()">
     <div class="container">
         <div class="sidebar">
             <div class="config-section">
@@ -17,8 +18,9 @@
                 <button id="presetTargets">Preset Targets</button>
                 <button id="uploadConfig">Upload Config</button>
                 <button id="inputConfig">Input Config</button>
-                <input type="file" id="fileUploadInput" style="display: none;" accept=".json"></input>
-                <button id="uploadCode">Upload Code</button>
+                <input type="file" id="fileUploadInput" style="display: none;" accept=".json">
+                <button id="uploadLogicCode">Upload Code</button>
+                <input type="file" id="logicCodeUploadInput" style="display: none" accept=".js, .py">
             </div>
             <div class="data-panel">
                 <h3>Data Panel</h3>
@@ -84,6 +86,71 @@
             <button id="submitConfigButton">Commit configuration</button>
         </div>
     </div>
+
+    <!-- TODO: 逻辑代码的modal框，用于展示？ -->
+    <div id="inputLogicCode">
+        <div ckass="modal-content">
+            <h3>input logic code</h3>
+            <textarea id="logicCodeInput" rows="20" cols="50">
+
+            </textarea>
+        </div>
+    </div>
+
+    <!-- brython的接口 -->
+
+    <!-- 逻辑代码上传按钮 -->
+    <script src="script/uploadLogic.js"></script>
+    <script>
+        const uploadCodeButton = document.getElementById("uploadLogicCode");
+        const codeUploadInput = document.getElementById("logicCodeUploadInput");
+        var new_code = false;
+
+        // 上传逻辑代码按钮响应
+        uploadCodeButton.addEventListener("click", () => {
+            codeUploadInput.click();
+        });
+
+        codeUploadInput.addEventListener("change", (event) => {
+            const file = event.target.files[0];
+            // 可能没有文件
+            if (file) {
+                const reader = new FileReader();
+                try {
+                    console.log("logic code file " + file.name + " is uploaded");
+                    reader.onload = function (e) {
+                        const fileContent = e.target.result;
+                        if (file.name.slice(-3) === ".js") {
+                            // 新增一个script文件注入
+                            console.log("injecting js logic code");
+
+                            // 添加新的
+                            process_js(fileContent);
+
+                            // 目前没有实现display
+                        }
+                        else if (file.name.slice(-3) === ".py") { // python
+                            console.log("injecting python logic code");
+
+                            // 添加新的
+                            process_py(fileContent);
+                            get_py_wrapper(fileContent);
+
+                            // 目前没有实现display
+                        }
+                        else {
+                            alert("format not supported");
+                        }
+                    };
+                } catch(error) {
+                    // 无效的Javascript或Python格式
+                    alert("Invalidformat");
+                }
+                reader.readAsText(file);
+                codeUploadInput.value = "";
+            }
+        })  
+    </script>
 
     <script src="script/drawUser.js"></script>
 
