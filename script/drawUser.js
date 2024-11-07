@@ -473,16 +473,18 @@ function walk() {
     return true;
 }
 
-// ------------------------------ Buttons -------------------------------
+// -------------------------------- WebSocket ------------------------------
 
-function start() {
+// Buttons
+
+function WSStart() {
     if (state == SimState.before_start) {
         sendStartMsg();
         state = SimState.running;
     }
 }
 
-function pause() {
+function WSPause() {
     if (state == SimState.running) {
         state = SimState.paused;
     }
@@ -492,7 +494,7 @@ function pause() {
     }
 }
 
-function reset() {
+function WSReset() {
     if (state == SimState.running || state == SimState.paused || state == SimState.finnished) {
         if (state != SimState.finnished) {
             sendEndMsg();
@@ -502,12 +504,7 @@ function reset() {
     }
 }
 
-function downloadData() {
 
-}
-
-
-// -------------------------------- WebSocket ------------------------------
 
 let ws_time = 0;
 let all_time = 0;
@@ -578,8 +575,6 @@ ws.onopen = () => {
     console.log('WebSocket connection opened');
     all_time = performance.now();
     updateView();
-    // Send simulation start message and setup info
-    // sendStartMsg();
 };
 
 ws.onmessage = async (event) => {
@@ -657,3 +652,92 @@ ws.onclose = () => {
     console.log('WebSocket connection closed');
 
 };
+
+
+// ---------------------------- Online loop ----------------------------
+
+// Buttons
+
+function OLStart() {
+    if (state == SimState.before_start) {
+        state = SimState.running;
+        loopWithUploadFile()
+    }
+}
+
+function OLPause() {
+    if (state == SimState.running) {
+        state = SimState.paused;
+    }
+    else if (state == SimState.paused) {
+        state = SimState.running;
+    }
+}
+
+function OLReset() {
+    if (state == SimState.running || state == SimState.paused || state == SimState.finnished) {
+        init();
+        updateView();
+    }
+}
+
+async function loopWithUploadFile() {
+    let user_phys_new = { x: user_phys.x, y: user_phys.y, angle: user_phys.angle };
+    while (walk()) {
+        // Check state
+        while (state == SimState.paused) {
+            // paused: do nothing
+            await sleep(20);
+        }
+        if (state == SimState.before_start || state == SimState.finnished) {
+            // reset: end loop
+            break;
+        }
+
+        // TODO: Get new user physical with user uploaded functions
+        if (need_reset) {
+            user_phys_new = update_reset(user_phys, border_phys, obstacles_phys, delta_t)
+        }
+        else {
+            has_reset = false
+            if (universal)
+                user_phys_new, has_reset = update_user(user_phys, border_phys, obstacles_phys, delta_t)
+            else {
+                trans_gain, rot_gain, cur_gain_r = calc_gain(user_phys, border_phys, obstacles_phys, delta_t)
+                user_phys_new = calc_move_with_gain(user_phys, trans_gain, rot_gain, cur_gain_r, delta_t)
+            }
+        }
+
+        // Up reset counter
+        if (has_reset) {
+            reset_cnt++;
+            console.log("Reset: ", reset_cnt);
+
+            need_reset = false;
+        }
+        else {
+            // Calc distance
+            distance_phys += Math.sqrt((user_phys_new.x - user_phys.x) ** 2 + (user_phys_new.y - user_phys.y) ** 2);
+
+            // Reset detection
+            need_reset = checkCollisions({ x: user_phys_new.x, y: user_phys_new.y }, config.border_phys, config.obstacles_phys);
+        }
+
+        // Accept this frame
+        if (!need_reset) {
+            // Update user physcial position
+            user_phys = { x: user_phys_new.x, y: user_phys_new.y, angle: user_phys_new.angle }
+            // Update path
+            if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
+                path_phys.shift();
+            if (path_virt.push({ x: user_virt.x, y: user_virt.y }) > MAX_PATH_LEN)
+                path_virt.shift();
+
+            updateView();
+        }
+        // Sleep
+        await sleep(delta_t * 1000);
+    }
+    state = SimState.finnished;
+
+}
