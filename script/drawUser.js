@@ -173,6 +173,9 @@ function pointInPolygon(point, vertices) {
 }
 
 function checkCollisions(walkerPosition, obstacles) {
+    if(!pointInPolygon(walkerPosition, border_phys)){
+        return true; // Collision detected
+    }
     for (const obstacle of obstacles) {
         if (pointInPolygon(walkerPosition, obstacle)) {
             return true; // Collision detected
@@ -329,8 +332,7 @@ function sendStartMsg() {
 }
 
 function sendRunMsg() {
-    // TODO: need_reset detection
-    let need_reset = false;
+    let need_reset = checkCollisions(user_phys, obstacles_phys);
 
     const run_msg = {
         type: "running",
@@ -362,6 +364,69 @@ function sendEndMsg() {
     };
     ws.send(JSON.stringify(end_msg));
 }
+function caseRunning(msg) {
+    // Up reset counter
+    if (msg.reset) {
+        reset_counter++;
+    }
+
+    // Receive user physical position for this frame
+    user_phys = { x: msg.user_x, y: msg.user_y, angle: msg.user_direction }
+    // Reset detection
+    need_reset = checkCollisions(user_phys, obstacles_phys);
+
+    // Accept this frame
+    if (!need_reset) {
+        if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
+            path_phys.shift();  // Update physical path
+        drawPhys();
+
+        // Draw user virtual position for this frame
+        if (path_virt.push({ x: user_virt.x, y: user_virt.y }) > MAX_PATH_LEN)
+            path_virt.shift();  // Update virtual path
+        drawVirt();
+    }
+}
+function calcMoveWithGain(trans_gain, rot_gain, cur_gain, delta) {
+    x=user_phys.x;
+    y=user_phys.y;
+    angle=user_phys.angle;
+    v=user_virt.v;
+    w=user_virt.w;
+    let trans=v/trans_gain;
+    
+    let rot=w/rot_gain;
+    user_phys.angle+=rot+trans/cur_gain;
+    user_phys.angle%=2*Math.PI;
+    user_phys.x+=trans*Math.cos(user_phys.angle);
+    user_phys.y+=trans*Math.sin(user_phys.angle);
+}
+function caseRunningGain(msg) {
+    // Up reset counter
+    if (msg.reset) {
+        reset_counter++;
+    }
+    let last_user_phys = { x: user_phys.x, y: user_phys.y, angle: user_phys.angle, v: user_virt.v, w: user_virt.w };
+    calcMoveWithGain(msg.trans_gain, msg.rot_gain, msg.cur_gain, delta_t);
+    
+    // Reset detection
+    
+    need_reset = checkCollisions(user_phys, obstacles_phys);
+    
+    // Accept this frame
+    if (!need_reset) {
+        if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
+            path_phys.shift();  // Update physical path
+        drawPhys();
+
+        // Draw user virtual position for this frame
+        if (path_virt.push({ x: user_virt.x, y: user_virt.y }) > MAX_PATH_LEN)
+            path_virt.shift();  // Update virtual path
+        drawVirt();
+    }else{
+        user_phys = last_user_phys;
+    }
+}
 
 ws.onopen = () => {
     console.log('WebSocket connection opened');
@@ -388,39 +453,30 @@ ws.onmessage = async (event) => {
             break;
 
         case "running":
-            // Up reset counter
-            if (msg.reset) {
-                reset_counter++;
-            }
-
-            // Receive user physical position for this frame
-            user_phys = { x: msg.user_x, y: msg.user_y, angle: msg.user_direction }
-            // Reset detection
-            need_reset = checkCollisions(user_phys, obstacles_phys);
-
-            // Accept this frame
-            if (!need_reset) {
-                if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
-                    path_phys.shift();  // Update physical path
-                drawPhys();
-
-                // Draw user virtual position for this frame
-                if (path_virt.push({ x: user_virt.x, y: user_virt.y }) > MAX_PATH_LEN)
-                    path_virt.shift();  // Update virtual path
-                drawVirt();
-
-                // New user virtual position for next frame
-                if (!walk()) {
-                    // Finish simulation
-                    sendEndMsg();
-                    break;
-                }
-                // Sleep
-                await sleep(delta_t * 1000);
-            }
-
+            caseRunning(msg);
             // Send next frame
             sendRunMsg();
+            // New user virtual position for next frame
+            if (!walk()) {
+                // Finish simulation
+                sendEndMsg();
+                break;
+            }
+            // Sleep
+            await sleep(delta_t * 1000);
+            break;
+        case "running-gain":
+            caseRunningGain(msg);
+            // Send next frame
+            sendRunMsg();
+            // New user virtual position for next frame
+            if (!walk()) {
+                // Finish simulation
+                sendEndMsg();
+                break;
+            }
+            // Sleep
+            await sleep(delta_t * 1000);
             break;
 
         case "end":
