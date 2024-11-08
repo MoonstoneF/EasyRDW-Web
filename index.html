@@ -19,8 +19,9 @@
                 <button id="uploadConfig">Upload Config</button>
                 <button id="inputConfig">Input Config</button>
                 <input type="file" id="fileUploadInput" style="display: none;" accept=".json">
-                <button id="uploadLogicCode">Upload Code</button>
+                <button id="uploadLogicCode">Upload Logic Code</button>
                 <input type="file" id="logicCodeUploadInput" style="display: none" accept=".js, .py">
+                <button id="resetLogicCode">Load Default Logic Code</button>
             </div>
             <div class="data-panel">
                 <h3>Data Panel</h3>
@@ -101,13 +102,25 @@
     <!-- 示例逻辑代码 -->
     <script src="script/exampleLogic.js" id="logicCodeScript"></script>
 
-    <!-- 逻辑代码上传按钮 -->
+    <!-- 逻辑代码按钮 -->
     <script src="script/uploadLogic.js"></script>
     <script>
-        console.log(document.getElementById("logicCodeScript"));
         const uploadCodeButton = document.getElementById("uploadLogicCode");
         const codeUploadInput = document.getElementById("logicCodeUploadInput");
-        var new_code = false;
+
+        const resetCodeButton = document.getElementById("resetLogicCode");
+
+        // 重置逻辑
+        resetCodeButton.addEventListener("click", () => {
+            localStorage.removeItem("userLogicCode");
+            clearPreviousLogicCode("logicCodeScript");
+            const defaultScript = document.createElement("script");
+            defaultScript.id = "logicCodeScript";
+            defaultScript.src = "script/exampleLogic.js";
+            document.body.appendChild(defaultScript);
+
+            console.log(document.getElementById("logicCodeScript"));
+        })
 
         // 上传逻辑代码按钮响应
         uploadCodeButton.addEventListener("click", () => {

@@ -13,6 +13,24 @@ function clearPreviousLogicCode(name) {
     }
 }
 
+// 添加一个监听event 加载localStorage中的逻辑代码
+document.addEventListener("DOMContentLoaded", function() {
+    const savedCode = localStorage.getItem('userLogicCode');
+    console.log("loadUserLogic");
+    if (savedCode) {
+        console.log("loadUserLogic: savedCode");
+        process_js(savedCode);
+    }
+    else {
+        console.log("no localStorage code, load default");
+    }
+});
+
+// 存
+function saveUserLogic(code) {
+    localStorage.setItem('userLogicCode', code);
+}
+
 // 处理上传的js逻辑代码 
 function process_js(code) {
     // 检查代码中是否包含示例代码中的关键函数
@@ -21,6 +39,7 @@ function process_js(code) {
     const hasRequiredFunctions = requiredFunctions.every(funcName => new RegExp(`function\\s+${funcName}\\s*\\(`).test(code));
 
     if (hasRequiredFunctions) {
+        saveUserLogic(code);
         clearPreviousLogicCode("logicCodeScript");
         const script = document.createElement("script");
         script.id = "logicCodeScript";
