@@ -18,6 +18,7 @@
                 <button id="uploadConfig">Upload Config</button>
                 <button id="inputConfig">Input Config</button>
                 <input type="file" id="fileUploadInput" style="display: none;" accept=".json">
+                <button id="downloadData">Download Data</button>
             </div>
             <div class="data-panel">
                 <h3>Data Panel</h3>
@@ -64,104 +65,65 @@
                 </div>
             </div>
             <div class="controls">
-                <button id="startButton" onclick="start()">Start</button>
-                <button id="pauseButton" onclick="pause()">Pause</button>
-                <button id="resetButton" onclick="reset()">Reset</button>
-                <button id="downloadData">Download Data</button>
+                <button id="localButton" onclick="toggleLocal()">Local</button>
+                <button id="onlineButton" onclick="toggleOnline()">Online</button>
+
+                <div id="localControls" style="display: none;">
+                    <button onclick="start()">Start</button>
+                    <button onclick="pause()">Pause</button>
+                    <button onclick="reset()">Reset</button>
+                </div>
+
+                <div id="onlineControls" style="display: none;">
+                    <button onclick="startOnline()">Start</button>
+                    <button onclick="pauseOnline()">Pause</button>
+                    <button onclick="resetOnline()">Reset</button>
+                </div>
             </div>
-        </div>
-    </div>
-
-    <!-- 输入配置的模态框 -->
-    <div id="inputConfigModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <span id="closeModalButton" class="close-button">&times;</span>
-            <h3>input configuration</h3>
-            <textarea id="configInput" rows="20" cols="50">
-
-            </textarea>
-            <button id="submitConfigButton">Commit configuration</button>
         </div>
     </div>
 
     <script src="script/drawUser.js"></script>
 
     <script>
-        // 获取按钮和元素
-        const uploadConfigButton = document.getElementById("uploadConfig");
-        const inputConfigButton = document.getElementById("inputConfig");
-        const downloadDataButton = document.getElementById("downloadData");
-        const fileUploadInput = document.getElementById("fileUploadInput");
-        const inputConfigModal = document.getElementById("inputConfigModal");
-        const configInput = document.getElementById("configInput");
-        const submitConfigButton = document.getElementById("submitConfigButton");
-        const closeModalButton = document.getElementById("closeModalButton");
+        // Local 和 Online 按钮切换逻辑
+        const localControls = document.getElementById("localControls");
+        const onlineControls = document.getElementById("onlineControls");
 
-        // 上传配置按钮响应
-        uploadConfigButton.addEventListener("click", () => {
-            fileUploadInput.click();
-        });
+        function toggleLocal() {
+            localControls.style.display = (localControls.style.display === "none" || localControls.style.display === "") ? "block" : "none";
+            onlineControls.style.display = "none"; // 隐藏 Online 按钮组
+        }
 
-        fileUploadInput.addEventListener("change", (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    try {
-                        const configData = JSON.parse(e.target.result);
-                        config = convertConfigToPixels(configData);
-                        console.log("Uploaded Config (in pixels):", config);
-                        saveConfig();
-                        updateView();
-                    } catch (error) {
-                        alert("Invalid JSON format");
-                    }
-                };
-                reader.readAsText(file);
-            }
-        });
+        function toggleOnline() {
+            onlineControls.style.display = (onlineControls.style.display === "none" || onlineControls.style.display === "") ? "block" : "none";
+            localControls.style.display = "none"; // 隐藏 Local 按钮组
+        }
 
-        // 打开输入配置的模态框
-        inputConfigButton.addEventListener("click", () => {
-            inputConfigModal.style.display = "block";
-            configInput.value = JSON.stringify(convertConfigToCoords(config), undefined, 4);
-        });
+        // 示例函数
+        function start() {
+            console.log("Local Start");
+        }
 
-        // 提交输入的配置数据
-        submitConfigButton.addEventListener("click", () => {
-            const configData = configInput.value;
-            try {
-                const parsedConfig = JSON.parse(configData);
-                config = convertConfigToPixels(parsedConfig);
-                console.log("Input Config (in pixels):", config);
-                saveConfig();
-                updateView();
-            } catch (error) {
-                alert("Invalid JSON format");
-            }
-            inputConfigModal.style.display = "none";
-        });
+        function pause() {
+            console.log("Local Pause");
+        }
 
-        // 关闭模态框
-        closeModalButton.addEventListener("click", () => {
-            inputConfigModal.style.display = "none";
-        });
+        function reset() {
+            console.log("Local Reset");
+        }
 
-        // 下载数据按钮响应
-        downloadDataButton.addEventListener("click", () => {
-            const data = {
-                positions: [{ x: 0, y: 0 }],
-                totalDistance: 0,
-                resetCount: 0
-            };
-            const jsonData = JSON.stringify(data, null, 2);
-            const blob = new Blob([jsonData], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = "data.json";
-            link.click();
-        });
+        function startOnline() {
+            console.log("Online Start");
+        }
+
+        function pauseOnline() {
+            console.log("Online Pause");
+        }
+
+        function resetOnline() {
+            console.log("Online Reset");
+        }
     </script>
 </body>
 
