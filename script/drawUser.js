@@ -751,6 +751,4 @@ async function loopWithUploadFile() {
         // Sleep
         await sleep(delta_t * 1000);
     }
-    state = SimState.finnished;
-
 }
