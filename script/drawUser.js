@@ -605,18 +605,18 @@ function caseRunning(msg) {
 }
 
 function calcMoveWithGain(trans_gain, rot_gain, cur_gain, delta) {
-    x=user_phys.x;
-    y=user_phys.y;
-    angle=user_phys.angle;
-    v=user_virt.v;
-    w=user_virt.w;
-    let trans=v/trans_gain;
-    
-    let rot=w/rot_gain;
-    user_phys.angle+=rot+trans/cur_gain;
-    user_phys.angle%=2*Math.PI;
-    user_phys.x+=trans*Math.cos(user_phys.angle);
-    user_phys.y+=trans*Math.sin(user_phys.angle);
+    x = user_phys.x;
+    y = user_phys.y;
+    angle = user_phys.angle;
+    v = user_virt.v;
+    w = user_virt.w;
+    let trans = v / trans_gain;
+
+    let rot = w / rot_gain;
+    user_phys.angle += rot + trans / cur_gain;
+    user_phys.angle %= 2 * Math.PI;
+    user_phys.x += trans * Math.cos(user_phys.angle);
+    user_phys.y += trans * Math.sin(user_phys.angle);
 }
 
 function caseRunningGain(msg) {
@@ -626,7 +626,7 @@ function caseRunningGain(msg) {
     }
     let last_user_phys = { x: user_phys.x, y: user_phys.y, angle: user_phys.angle };
     calcMoveWithGain(msg.trans_gain, msg.rot_gain, msg.cur_gain, delta_t);
-    
+
     // Up reset counter
     if (msg.reset) {
         reset_cnt++;
@@ -682,7 +682,7 @@ ws.onmessage = async (event) => {
 
         case "running":
             caseRunning(msg);
-            
+
             // New user virtual position for next frame
             if (!walk()) {
                 // Finish simulation
@@ -690,19 +690,14 @@ ws.onmessage = async (event) => {
                 state = SimState.finnished;
                 break;
             }
-        
+
             // Sleep
             await sleep(delta_t * 1000);
-        
+
             // Send next frame
-            if (state == SimState.running) {
-                ws.send(JSON.stringify(RunMsg()));
-            }
-            else if (state == SimState.paused) {
-                in_pause_msg = RunMsg();
-            }
+            sendRunMsg();
             break;
-        
+
         case "running-gain":
             caseRunningGain(msg);
 
@@ -715,14 +710,9 @@ ws.onmessage = async (event) => {
             }
             // Sleep
             await sleep(delta_t * 1000);
-            
+
             // Send next frame
-            if (state == SimState.running) {
-                ws.send(JSON.stringify(RunMsg()));
-            }
-            else if (state == SimState.paused) {
-                in_pause_msg = RunMsg();
-            }
+            sendRunMsg();
             break;
 
         case "end":
