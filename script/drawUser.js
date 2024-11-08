@@ -159,6 +159,7 @@ function loadConfig() {
     const savedConfig = localStorage.getItem('config');
     if (savedConfig) {
         config = JSON.parse(savedConfig); // Parse the JSON string back into an object
+        updateView();
     }
 }
 
@@ -690,12 +691,13 @@ function OLReset() {
 async function loopWithUploadFile() {
     let user_phys_new = { x: user_phys.x, y: user_phys.y, angle: user_phys.angle };
     let has_reset = false;
+    updateView();
 
-    while (walk()) {
+    while (1) {
         // Check state
         while (state == SimState.paused) {
             // paused: do nothing
-            await sleep(20);
+            await sleep(200);
         }
         if (state == SimState.before_start || state == SimState.finnished) {
             // reset: end loop
@@ -704,12 +706,13 @@ async function loopWithUploadFile() {
 
         // TODO: Get new user physical with user uploaded functions
         if (need_reset) {
-            user_phys_new = update_reset(JSON.stringify(RunMsg()));
-            has_reset = true;
+            user_phys_new = update_reset({ ...user_phys }, getBoundingBox(config.border_phys), delta_t);
+            reset_cnt++;
+            console.log("Reset: ", reset_cnt);
+            need_reset = false;
         }
         else {
-            has_reset = false
-            user_phys_new = update_user(JSON.stringify(RunMsg()));
+            user_phys_new = update_user({ ...user_phys }, getBoundingBox(config.border_phys), delta_t);
 
             // TODO: gain
             // if (universal)
@@ -718,15 +721,7 @@ async function loopWithUploadFile() {
             //     trans_gain, rot_gain, cur_gain_r = calc_gain(user_phys, config.border_phys, config.obstacles_phys, delta_t)
             //     user_phys_new = calc_move_with_gain(user_phys, trans_gain, rot_gain, cur_gain_r, delta_t)
             // }
-        }
 
-        // Up reset counter
-        if (has_reset) {
-            reset_cnt++;
-            console.log("Reset: ", reset_cnt);
-            need_reset = false;
-        }
-        else {
             // Calc distance
             distance_phys += Math.sqrt((user_phys_new.x - user_phys.x) ** 2 + (user_phys_new.y - user_phys.y) ** 2);
 
@@ -737,7 +732,7 @@ async function loopWithUploadFile() {
         // Accept this frame
         if (!need_reset) {
             // Update user physcial position
-            user_phys = { x: user_phys_new.x, y: user_phys_new.y, angle: user_phys_new.angle }
+            user_phys = { x: user_phys_new.x, y: user_phys_new.y, angle: user_phys_new.angle, v: user_virt.v, w: user_virt.w }
             // Update path
             if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
                 path_phys.shift();
@@ -745,6 +740,13 @@ async function loopWithUploadFile() {
                 path_virt.shift();
 
             updateView();
+
+            // New user virtual position for next frame
+            if (!walk()) {
+                // Finish simulation
+                state = SimState.finnished;
+                break;
+            }
         }
         // Sleep
         await sleep(delta_t * 1000);

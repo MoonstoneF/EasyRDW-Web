@@ -2,7 +2,7 @@
 function clearPreviousLogicCode(name) {
     console.log(`Clearing previous logic code: ${name}`);
     const existingScript = document.getElementById(name);
-    ["update_user", "update_reset", "calc_gain", "calc_move_with_gain"].forEach((func_name) => {
+    ["update_user", "update_reset"].forEach((func_name) => {
         if (window[func_name]) {
             delete window[func_name];
         }
@@ -28,13 +28,13 @@ function process_py(code) {
     clearPreviousLogicCode("logicCodeScript");
     const script = document.createElement("script");
     script.id = "logicCodeScript";
-    script.type= "text/python";
+    script.type = "text/python";
 
     // 将python代码转换为js代码
     const prologue = "from browser import document, window, alert, console\n\n";
     var epilogue = "\n";
     // 自带检测
-    ["update_user", "update_reset", "calc_gain", "calc_move_with_gain"].forEach((func_name) => {
+    ["update_user", "update_reset"].forEach((func_name) => {
         const testPattern = new RegExp(`def\\s+${func_name}\\s*\\(`);
         if (testPattern.test(code)) {
             epilogue += `window.${func_name} = ${func_name}\n`;
@@ -52,7 +52,7 @@ function get_py_wrapper(code) {
     scriptwrapper.id = "logicCodeScriptWrapper";
     scriptwrapper.type = "text/javascript";
     var wrap = "";
-    ["update_user", "update_reset", "calc_gain", "calc_move_with_gain"].forEach((func_name) => {
+    ["update_user", "update_reset"].forEach((func_name) => {
         const testPattern = new RegExp(`def\\s+${func_name}\\s*\\(`);
         if (testPattern.test(code)) {
             wrap += `function ${func_name}(...args) {\n`;
