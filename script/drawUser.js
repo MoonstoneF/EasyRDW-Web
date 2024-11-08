@@ -370,6 +370,7 @@ function pointInPolygon(point, vertices) {
     return inside;
 }
 
+
 function checkCollisions(walkerPosition, border, obstacles) {
     if (!pointInPolygon(walkerPosition, border)) {
         console.log("Collide with border", walkerPosition, border);
@@ -573,6 +574,88 @@ function sendEndMsg() {
     };
     ws.send(JSON.stringify(end_msg));
 }
+function caseRunning(msg) {
+    // Up reset counter
+    if (msg.reset) {
+        reset_cnt++;
+        console.log("Reset: ", reset_cnt);
+
+        need_reset = false;
+    }
+    else {
+        // Calc distance
+        distance_phys += Math.sqrt((msg.user_x - user_phys.x) ** 2 + (msg.user_y - user_phys.y) ** 2);
+
+        // Reset detection
+        need_reset = checkCollisions({ x: msg.user_x, y: msg.user_y }, config.border_phys, config.obstacles_phys);
+    }
+
+    // Accept this frame
+    if (!need_reset) {
+        // Update user physcial position
+        user_phys = { x: msg.user_x, y: msg.user_y, angle: msg.user_direction }
+        // Update path
+        if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
+            path_phys.shift();
+        if (path_virt.push({ x: user_virt.x, y: user_virt.y }) > MAX_PATH_LEN)
+            path_virt.shift();
+
+        updateView();
+    }
+}
+
+function calcMoveWithGain(trans_gain, rot_gain, cur_gain, delta) {
+    x=user_phys.x;
+    y=user_phys.y;
+    angle=user_phys.angle;
+    v=user_virt.v;
+    w=user_virt.w;
+    let trans=v/trans_gain;
+    
+    let rot=w/rot_gain;
+    user_phys.angle+=rot+trans/cur_gain;
+    user_phys.angle%=2*Math.PI;
+    user_phys.x+=trans*Math.cos(user_phys.angle);
+    user_phys.y+=trans*Math.sin(user_phys.angle);
+}
+
+function caseRunningGain(msg) {
+    // Up reset counter
+    if (msg.reset) {
+        reset_counter++;
+    }
+    let last_user_phys = { x: user_phys.x, y: user_phys.y, angle: user_phys.angle };
+    calcMoveWithGain(msg.trans_gain, msg.rot_gain, msg.cur_gain, delta_t);
+    
+    // Up reset counter
+    if (msg.reset) {
+        reset_cnt++;
+        console.log("Reset: ", reset_cnt);
+
+        need_reset = false;
+    }
+    else {
+        // Calc distance
+        distance_phys += Math.sqrt((last_user_phys.x - user_phys.x) ** 2 + (last_user_phys.y - user_phys.y) ** 2);
+
+        // Reset detection
+        need_reset = checkCollisions({ x: user_phys.x, y: user_phys.y }, config.border_phys, config.obstacles_phys);
+    }
+
+    // Accept this frame
+    if (!need_reset) {
+        // Update path
+        if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
+            path_phys.shift();
+        if (path_virt.push({ x: user_virt.x, y: user_virt.y }) > MAX_PATH_LEN)
+            path_virt.shift();
+
+        updateView();
+    }
+    else {
+        user_phys = last_user_phys;
+    }
+}
 
 ws.onopen = () => {
     console.log('WebSocket connection opened');
@@ -598,47 +681,48 @@ ws.onmessage = async (event) => {
             break;
 
         case "running":
-            // Up reset counter
-            if (msg.reset) {
-                reset_cnt++;
-                console.log("Reset: ", reset_cnt);
-
-                need_reset = false;
+            caseRunning(msg);
+            
+            // New user virtual position for next frame
+            if (!walk()) {
+                // Finish simulation
+                sendEndMsg();
+                state = SimState.finnished;
+                break;
             }
-            else {
-                // Calc distance
-                distance_phys += Math.sqrt((msg.user_x - user_phys.x) ** 2 + (msg.user_y - user_phys.y) ** 2);
-
-                // Reset detection
-                need_reset = checkCollisions({ x: msg.user_x, y: msg.user_y }, config.border_phys, config.obstacles_phys);
-            }
-
-            // Accept this frame
-            if (!need_reset) {
-                // Update user physcial position
-                user_phys = { x: msg.user_x, y: msg.user_y, angle: msg.user_direction }
-                // Update path
-                if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
-                    path_phys.shift();
-                if (path_virt.push({ x: user_virt.x, y: user_virt.y }) > MAX_PATH_LEN)
-                    path_virt.shift();
-
-                updateView();
-
-                // New user virtual position for next frame
-                if (!walk()) {
-                    // Finish simulation
-                    sendEndMsg();
-                    state = SimState.finnished;
-                    break;
-                }
-            }
-
+        
             // Sleep
             await sleep(delta_t * 1000);
-
+        
             // Send next frame
-            sendRunMsg();
+            if (state == SimState.running) {
+                ws.send(JSON.stringify(RunMsg()));
+            }
+            else if (state == SimState.paused) {
+                in_pause_msg = RunMsg();
+            }
+            break;
+        
+        case "running-gain":
+            caseRunningGain(msg);
+
+            // New user virtual position for next frame
+            if (!walk()) {
+                // Finish simulation
+                sendEndMsg();
+                state = SimState.finnished;
+                break;
+            }
+            // Sleep
+            await sleep(delta_t * 1000);
+            
+            // Send next frame
+            if (state == SimState.running) {
+                ws.send(JSON.stringify(RunMsg()));
+            }
+            else if (state == SimState.paused) {
+                in_pause_msg = RunMsg();
+            }
             break;
 
         case "end":
