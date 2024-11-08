@@ -4,11 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <title>User Position Tracking</title>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@3.13.0/brython.min.js"></script>
+    <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@3.13.0/brython.min.js"></script> -->
     <link rel="stylesheet" href="script/styles.css">
 </head>
 
-<body onload="brython()">
+<body>
     <div class="container">
         <div class="sidebar">
             <div class="config-section">
@@ -67,9 +67,12 @@
                 </div>
             </div>
             <div class="controls">
-                <button id="startButton" onclick="start()">Start</button>
-                <button id="pauseButton" onclick="pause()">Pause</button>
-                <button id="resetButton" onclick="reset()">Reset</button>
+                <!-- <button id="startButton" onclick="OLStart()">Start</button>
+                <button id="pauseButton" onclick="OLPause()">Pause</button>
+                <button id="resetButton" onclick="OLReset()">Reset</button> -->
+                <button id="startButton" onclick="WSStart()">Start</button>
+                <button id="pauseButton" onclick="WSPause()">Pause</button>
+                <button id="resetButton" onclick="WSReset()">Reset</button>
                 <button id="downloadData">Download Data</button>
             </div>
         </div>
@@ -91,16 +94,14 @@
     <div id="inputLogicCode">
         <div ckass="modal-content">
             <h3>input logic code</h3>
-            <textarea id="logicCodeInput" rows="20" cols="50">
-
-            </textarea>
+            <textarea id="logicCodeInput" rows="20" cols="50"></textarea>
         </div>
     </div>
 
     <!-- brython的接口 -->
 
     <!-- 逻辑代码上传按钮 -->
-    <script src="script/uploadLogic.js"></script>
+    <!-- <script src="script/uploadLogic.js"></script> -->
     <script>
         const uploadCodeButton = document.getElementById("uploadLogicCode");
         const codeUploadInput = document.getElementById("logicCodeUploadInput");
@@ -142,7 +143,7 @@
                             alert("format not supported");
                         }
                     };
-                } catch(error) {
+                } catch (error) {
                     // 无效的Javascript或Python格式
                     alert("Invalidformat");
                 }

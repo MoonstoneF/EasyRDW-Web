@@ -349,8 +349,8 @@ function updateView() {
 }
 
 // Test when no socket
-// drawPhys();
-// drawVirt();
+// updateView();
+
 
 // ------------------------------- Walk Simulation ----------------------------
 
@@ -513,12 +513,11 @@ let all_time = 0;
 const ws = new WebSocket('ws://localhost:8765');  // Connect to the local Python program
 
 // WS Protocol
-function sendStartMsg() {
+function StartMsg() {
     // Compose start message
     bbox_phys = getBoundingBox(config.border_phys);
     bbox_virt = getBoundingBox(config.border_virt);
-    const start_msg =
-    {
+    return {
         type: "start",
         physical: {
             height: bbox_phys.height,
@@ -533,13 +532,10 @@ function sendStartMsg() {
             obstacle_list: config.obstacles_virt,
         }
     };
-
-    // Send start message
-    ws.send(JSON.stringify(start_msg));
 }
 
-function sendRunMsg() {
-    const run_msg = {
+function RunMsg() {
+    return {
         type: "running",
         physical: {
             user_x: user_phys.x,
@@ -556,19 +552,29 @@ function sendRunMsg() {
         delta_t: delta_t,
         need_reset: need_reset
     };
+}
+
+function EndMsg() {
+    return {
+        type: "end",
+    };
+}
+
+function sendStartMsg() {
+    ws.send(JSON.stringify(StartMsg()));
+}
+
+function sendRunMsg() {
     if (state == SimState.running) {
-        ws.send(JSON.stringify(run_msg));
+        ws.send(JSON.stringify(RunMsg()));
     }
     else if (state == SimState.paused) {
-        in_pause_msg = run_msg;
+        in_pause_msg = RunMsg();
     }
 }
 
 function sendEndMsg() {
-    const end_msg = {
-        type: "end",
-    };
-    ws.send(JSON.stringify(end_msg));
+    ws.send(JSON.stringify(EndMsg()));
 }
 
 ws.onopen = () => {
@@ -683,6 +689,8 @@ function OLReset() {
 
 async function loopWithUploadFile() {
     let user_phys_new = { x: user_phys.x, y: user_phys.y, angle: user_phys.angle };
+    let has_reset = false;
+
     while (walk()) {
         // Check state
         while (state == SimState.paused) {
@@ -696,23 +704,26 @@ async function loopWithUploadFile() {
 
         // TODO: Get new user physical with user uploaded functions
         if (need_reset) {
-            user_phys_new = update_reset(user_phys, border_phys, obstacles_phys, delta_t)
+            user_phys_new = update_reset(JSON.stringify(RunMsg()));
+            has_reset = true;
         }
         else {
             has_reset = false
-            if (universal)
-                user_phys_new, has_reset = update_user(user_phys, border_phys, obstacles_phys, delta_t)
-            else {
-                trans_gain, rot_gain, cur_gain_r = calc_gain(user_phys, border_phys, obstacles_phys, delta_t)
-                user_phys_new = calc_move_with_gain(user_phys, trans_gain, rot_gain, cur_gain_r, delta_t)
-            }
+            user_phys_new = update_user(JSON.stringify(RunMsg()));
+
+            // TODO: gain
+            // if (universal)
+            //     user_phys_new, has_reset = update_user(user_phys, config.border_phys, config.obstacles_phys, delta_t)
+            // else {
+            //     trans_gain, rot_gain, cur_gain_r = calc_gain(user_phys, config.border_phys, config.obstacles_phys, delta_t)
+            //     user_phys_new = calc_move_with_gain(user_phys, trans_gain, rot_gain, cur_gain_r, delta_t)
+            // }
         }
 
         // Up reset counter
         if (has_reset) {
             reset_cnt++;
             console.log("Reset: ", reset_cnt);
-
             need_reset = false;
         }
         else {
