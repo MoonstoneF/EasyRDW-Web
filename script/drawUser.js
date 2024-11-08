@@ -159,6 +159,7 @@ function loadConfig() {
     const savedConfig = localStorage.getItem('config');
     if (savedConfig) {
         config = JSON.parse(savedConfig); // Parse the JSON string back into an object
+        updateView();
     }
 }
 
@@ -349,8 +350,8 @@ function updateView() {
 }
 
 // Test when no socket
-// drawPhys();
-// drawVirt();
+// updateView();
+
 
 // ------------------------------- Walk Simulation ----------------------------
 
@@ -474,16 +475,18 @@ function walk() {
     return true;
 }
 
-// ------------------------------ Buttons -------------------------------
+// -------------------------------- WebSocket ------------------------------
 
-function start() {
+// Buttons
+
+function WSStart() {
     if (state == SimState.before_start) {
         sendStartMsg();
         state = SimState.running;
     }
 }
 
-function pause() {
+function WSPause() {
     if (state == SimState.running) {
         state = SimState.paused;
     }
@@ -493,7 +496,7 @@ function pause() {
     }
 }
 
-function reset() {
+function WSReset() {
     if (state == SimState.running || state == SimState.paused || state == SimState.finnished) {
         if (state != SimState.finnished) {
             sendEndMsg();
@@ -503,12 +506,7 @@ function reset() {
     }
 }
 
-function downloadData() {
 
-}
-
-
-// -------------------------------- WebSocket ------------------------------
 
 let ws_time = 0;
 let all_time = 0;
@@ -517,12 +515,11 @@ let all_time = 0;
 const ws = new WebSocket('ws://localhost:8765');  // Connect to the local Python program
 
 // WS Protocol
-function sendStartMsg() {
+function StartMsg() {
     // Compose start message
     bbox_phys = getBoundingBox(config.border_phys);
     bbox_virt = getBoundingBox(config.border_virt);
-    const start_msg =
-    {
+    return {
         type: "start",
         physical: {
             height: bbox_phys.height,
@@ -537,13 +534,10 @@ function sendStartMsg() {
             obstacle_list: config.obstacles_virt,
         }
     };
-
-    // Send start message
-    ws.send(JSON.stringify(start_msg));
 }
 
-function sendRunMsg() {
-    const run_msg = {
+function RunMsg() {
+    return {
         type: "running",
         physical: {
             user_x: user_phys.x,
@@ -560,19 +554,29 @@ function sendRunMsg() {
         delta_t: delta_t,
         need_reset: need_reset
     };
+}
+
+function EndMsg() {
+    return {
+        type: "end",
+    };
+}
+
+function sendStartMsg() {
+    ws.send(JSON.stringify(StartMsg()));
+}
+
+function sendRunMsg() {
     if (state == SimState.running) {
-        ws.send(JSON.stringify(run_msg));
+        ws.send(JSON.stringify(RunMsg()));
     }
     else if (state == SimState.paused) {
-        in_pause_msg = run_msg;
+        in_pause_msg = RunMsg();
     }
 }
 
 function sendEndMsg() {
-    const end_msg = {
-        type: "end",
-    };
-    ws.send(JSON.stringify(end_msg));
+    ws.send(JSON.stringify(EndMsg()));
 }
 function caseRunning(msg) {
     // Up reset counter
@@ -661,8 +665,6 @@ ws.onopen = () => {
     console.log('WebSocket connection opened');
     all_time = performance.now();
     updateView();
-    // Send simulation start message and setup info
-    // sendStartMsg();
 };
 
 ws.onmessage = async (event) => {
@@ -731,3 +733,96 @@ ws.onclose = () => {
     console.log('WebSocket connection closed');
 
 };
+
+
+// ---------------------------- Online loop ----------------------------
+
+// Buttons
+
+function OLStart() {
+    if (state == SimState.before_start) {
+        state = SimState.running;
+        loopWithUploadFile()
+    }
+}
+
+function OLPause() {
+    if (state == SimState.running) {
+        state = SimState.paused;
+    }
+    else if (state == SimState.paused) {
+        state = SimState.running;
+    }
+}
+
+function OLReset() {
+    if (state == SimState.running || state == SimState.paused || state == SimState.finnished) {
+        init();
+        updateView();
+    }
+}
+
+async function loopWithUploadFile() {
+    let user_phys_new = { x: user_phys.x, y: user_phys.y, angle: user_phys.angle };
+    let has_reset = false;
+    updateView();
+
+    while (1) {
+        // Check state
+        while (state == SimState.paused) {
+            // paused: do nothing
+            await sleep(200);
+        }
+        if (state == SimState.before_start || state == SimState.finnished) {
+            // reset: end loop
+            break;
+        }
+
+        // TODO: Get new user physical with user uploaded functions
+        if (need_reset) {
+            user_phys_new = update_reset({ ...user_phys }, getBoundingBox(config.border_phys), delta_t);
+            reset_cnt++;
+            console.log("Reset: ", reset_cnt);
+            need_reset = false;
+        }
+        else {
+            user_phys_new = update_user({ ...user_phys }, getBoundingBox(config.border_phys), delta_t);
+
+            // TODO: gain
+            // if (universal)
+            //     user_phys_new, has_reset = update_user(user_phys, config.border_phys, config.obstacles_phys, delta_t)
+            // else {
+            //     trans_gain, rot_gain, cur_gain_r = calc_gain(user_phys, config.border_phys, config.obstacles_phys, delta_t)
+            //     user_phys_new = calc_move_with_gain(user_phys, trans_gain, rot_gain, cur_gain_r, delta_t)
+            // }
+
+            // Calc distance
+            distance_phys += Math.sqrt((user_phys_new.x - user_phys.x) ** 2 + (user_phys_new.y - user_phys.y) ** 2);
+
+            // Reset detection
+            need_reset = checkCollisions({ x: user_phys_new.x, y: user_phys_new.y }, config.border_phys, config.obstacles_phys);
+        }
+
+        // Accept this frame
+        if (!need_reset) {
+            // Update user physcial position
+            user_phys = { x: user_phys_new.x, y: user_phys_new.y, angle: user_phys_new.angle, v: user_virt.v, w: user_virt.w }
+            // Update path
+            if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
+                path_phys.shift();
+            if (path_virt.push({ x: user_virt.x, y: user_virt.y }) > MAX_PATH_LEN)
+                path_virt.shift();
+
+            updateView();
+
+            // New user virtual position for next frame
+            if (!walk()) {
+                // Finish simulation
+                state = SimState.finnished;
+                break;
+            }
+        }
+        // Sleep
+        await sleep(delta_t * 1000);
+    }
+}
