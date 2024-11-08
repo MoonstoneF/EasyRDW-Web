@@ -1,7 +1,7 @@
 // Misc
 const MAX_PATH_LEN = 1000;
 const delta_t = 0.02;
-const px_per_meter = 5 / 200;
+const meter_per_px = 5 / 200;
 let scale_phys = 1;
 let scale_virt = 1;
 
@@ -83,15 +83,15 @@ function init() {
 
 function convertCoordsToPixels(coords) {
     return coords.map(point => ({
-        x: point.x / px_per_meter,
-        y: point.y / px_per_meter
+        x: point.x / meter_per_px,
+        y: point.y / meter_per_px
     }));
 }
 
 function convertPixelsToCoords(pixels) {
     return pixels.map(point => ({
-        x: point.x * px_per_meter,
-        y: point.y * px_per_meter
+        x: point.x * meter_per_px,
+        y: point.y * meter_per_px
     }));
 }
 
@@ -112,15 +112,15 @@ function convertConfigToPixels(configData) {
     console.log(convertedConfig.initial_user_phys);
 
     convertedConfig.initial_user_phys.angle = configData.initial_user_phys.angle;
-    convertedConfig.initial_user_phys.v = configData.initial_user_phys.v * (delta_t / px_per_meter);
+    convertedConfig.initial_user_phys.v = configData.initial_user_phys.v * (delta_t / meter_per_px);
     convertedConfig.initial_user_phys.w = configData.initial_user_phys.w * (delta_t);
 
     convertedConfig.initial_user_virt = convertCoordsToPixels([configData.initial_user_virt])[0];
     convertedConfig.initial_user_virt.angle = configData.initial_user_virt.angle;
-    convertedConfig.initial_user_virt.v = configData.initial_user_virt.v * (delta_t / px_per_meter);
+    convertedConfig.initial_user_virt.v = configData.initial_user_virt.v * (delta_t / meter_per_px);
     convertedConfig.initial_user_virt.w = configData.initial_user_virt.w * (delta_t);
 
-    convertedConfig.walk_speed = configData.walk_speed * (delta_t / px_per_meter);
+    convertedConfig.walk_speed = configData.walk_speed * (delta_t / meter_per_px);
     convertedConfig.turn_speed = configData.turn_speed * (delta_t);
 
     return convertedConfig;
@@ -141,15 +141,15 @@ function convertConfigToCoords(configData) {
 
     convertedConfig.initial_user_phys = convertPixelsToCoords([configData.initial_user_phys])[0];
     convertedConfig.initial_user_phys.angle = configData.initial_user_phys.angle;
-    convertedConfig.initial_user_phys.v = configData.initial_user_phys.v / (delta_t / px_per_meter);
+    convertedConfig.initial_user_phys.v = configData.initial_user_phys.v / (delta_t / meter_per_px);
     convertedConfig.initial_user_phys.w = configData.initial_user_phys.w / (delta_t);
 
     convertedConfig.initial_user_virt = convertPixelsToCoords([configData.initial_user_virt])[0];
     convertedConfig.initial_user_virt.angle = configData.initial_user_virt.angle;
-    convertedConfig.initial_user_virt.v = configData.initial_user_virt.v / (delta_t / px_per_meter);
+    convertedConfig.initial_user_virt.v = configData.initial_user_virt.v / (delta_t / meter_per_px);
     convertedConfig.initial_user_virt.w = configData.initial_user_virt.w / (delta_t);
 
-    convertedConfig.walk_speed = configData.walk_speed / (delta_t / px_per_meter);
+    convertedConfig.walk_speed = configData.walk_speed / (delta_t / meter_per_px);
     convertedConfig.turn_speed = configData.turn_speed / (delta_t);
 
     return convertedConfig;
@@ -334,11 +334,11 @@ function drawVirt() {
 // Function to update the HTML with variable values
 function writeText() {
     document.getElementById('virtualPosition').textContent =
-        `x: ${(user_virt.x * px_per_meter).toFixed(2)} m, y: ${(user_virt.y * px_per_meter).toFixed(2)} m, angle: ${user_virt.angle.toFixed(2)}`;
+        `x: ${(user_virt.x * meter_per_px).toFixed(2)} m, y: ${(user_virt.y * meter_per_px).toFixed(2)} m, angle: ${user_virt.angle.toFixed(2)}`;
     document.getElementById('physicalPosition').textContent =
-        `x: ${(user_phys.x * px_per_meter).toFixed(2)} m, y: ${(user_phys.y * px_per_meter).toFixed(2)} m, angle: ${user_phys.angle.toFixed(2)}`;
-    document.getElementById('virtualDistance').textContent = distance_virt.toFixed(2) + ' m';
-    document.getElementById('physicalDistance').textContent = distance_phys.toFixed(2) + ' m';
+        `x: ${(user_phys.x * meter_per_px).toFixed(2)} m, y: ${(user_phys.y * meter_per_px).toFixed(2)} m, angle: ${user_phys.angle.toFixed(2)}`;
+    document.getElementById('virtualDistance').textContent = (distance_virt * meter_per_px).toFixed(2) + ' m';
+    document.getElementById('physicalDistance').textContent = (distance_phys * meter_per_px).toFixed(2) + ' m';
     document.getElementById('totalResets').textContent = reset_cnt;
 }
 
