@@ -98,11 +98,13 @@
         </div>
     </div>
 
-    <!-- brython的接口 -->
+    <!-- 示例逻辑代码 -->
+    <script src="script/exampleLogic.js" id="logicCodeScript"></script>
 
     <!-- 逻辑代码上传按钮 -->
     <script src="script/uploadLogic.js"></script>
     <script>
+        console.log(document.getElementById("logicCodeScript"));
         const uploadCodeButton = document.getElementById("uploadLogicCode");
         const codeUploadInput = document.getElementById("logicCodeUploadInput");
         var new_code = false;
@@ -124,7 +126,6 @@
                         if (file.name.slice(-3) === ".js") {
                             // 新增一个script文件注入
                             console.log("injecting js logic code");
-
                             // 添加新的
                             process_js(fileContent);
 
@@ -132,7 +133,6 @@
                         }
                         else if (file.name.slice(-3) === ".py") { // python
                             console.log("injecting python logic code");
-
                             // 添加新的
                             process_py(fileContent);
                             get_py_wrapper(fileContent);

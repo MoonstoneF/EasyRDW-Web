@@ -15,12 +15,23 @@ function clearPreviousLogicCode(name) {
 
 // 处理上传的js逻辑代码 
 function process_js(code) {
-    clearPreviousLogicCode("logicCodeScript");
-    const script = document.createElement("script");
-    script.id = "logicCodeScript";
-    script.textContent = code;
-    document.body.appendChild(script);
-    console.log(document.getElementById("logicCodeScript"));
+    // 检查代码中是否包含示例代码中的关键函数
+    // 这里的函数名可以加 无所谓
+    const requiredFunctions = ["update_user", "update_reset"];
+    const hasRequiredFunctions = requiredFunctions.every(funcName => new RegExp(`function\\s+${funcName}\\s*\\(`).test(code));
+
+    if (hasRequiredFunctions) {
+        clearPreviousLogicCode("logicCodeScript");
+        const script = document.createElement("script");
+        script.id = "logicCodeScript";
+        script.textContent = code;
+        document.body.appendChild(script);
+        console.log(document.getElementById("logicCodeScript"));
+    }
+    else {
+        console.warn("The uploaded code does not contain the required functions.");
+        console.log(document.getElementById("logicCodeScript"));
+    }
 }
 
 // 处理上传的py逻辑代码
