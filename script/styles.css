@@ -124,7 +124,8 @@ body {
 }
 
 .controls button {
-    padding: 10px 20px;
+    width: 100px; /* 设置固定宽度，使按钮变窄 */
+    padding: 10px 15px; /* 调整内边距以适应较小的宽度 */
     font-size: 16px;
     cursor: pointer;
     border: none;
@@ -137,6 +138,8 @@ body {
 .controls button:hover {
     background-color: #0056b3;
 }
+
+
 
 /* 可调整大小的画布容器 */
 .resizable-canvas-container {

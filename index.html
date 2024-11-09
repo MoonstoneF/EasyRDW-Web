@@ -13,9 +13,19 @@
         <div class="sidebar">
             <div class="config-section">
                 <h2>Configuration</h2>
-                <button id="presetVirtualSpace">Preset Virtual Space</button>
-                <button id="presetPhysicalSpace">Preset Physical Space</button>
-                <button id="presetTargets">Preset Targets</button>
+                <!-- Environment Selection Buttons -->
+                <button class="environment-button" id="environment1">Environment 1</button>
+                <button class="environment-button" id="environment2">Environment 2</button>
+                <button class="environment-button" id="environment3">Environment 3</button>
+                <button class="environment-button" id="environment4">Environment 4</button>
+                <button class="environment-button" id="environment5">Environment 5</button>
+
+                <!-- Preset Configurations (Hidden Initially) -->
+                <div class="preset-buttons hidden" id="presetContainer">
+                    <button class="preset-button" id="presetVirtualSpace">Preset Virtual Space</button>
+                    <button class="preset-button" id="presetPhysicalSpace">Preset Physical Space</button>
+                    <button class="preset-button" id="presetTargets">Preset Targets</button>
+                </div>
                 <button id="uploadConfig">Upload Config</button>
                 <button id="inputConfig">Input Config</button>
                 <input type="file" id="fileUploadInput" style="display: none;" accept=".json">
@@ -68,13 +78,20 @@
                 </div>
             </div>
             <div class="controls">
-                <button id="startButton" onclick="OLStart()">Start</button>
-                <button id="pauseButton" onclick="OLPause()">Pause</button>
-                <button id="resetButton" onclick="OLReset()">Reset</button>
-                <!-- <button id="startButton" onclick="WSStart()">Start</button>
-                <button id="pauseButton" onclick="WSPause()">Pause</button>
-                <button id="resetButton" onclick="WSReset()">Reset</button> -->
-                <button id="downloadData">Download Data</button>
+                <button id="localButton" onclick="toggleLocal()">Local</button>
+                <button id="onlineButton" onclick="toggleOnline()">Online</button>
+
+                <div id="localControls" style="display: none;">
+                    <button id="startButton1" onclick="WSStart()">Start</button>
+                    <button id="pauseButton1" onclick="WSPause()">Pause</button>
+                    <button id="resetButton1" onclick="WSReset()">Reset</button>
+                </div>
+
+                <div id="onlineControls" style="display: none;">
+                    <button id="startButton2" onclick="OLStart()">Start</button>
+                    <button id="pauseButton2" onclick="OLPause()">Pause</button>
+                    <button id="resetButton2" onclick="OLReset()">Reset</button>
+                </div>
             </div>
         </div>
     </div>
@@ -229,22 +246,13 @@
             inputConfigModal.style.display = "none";
         });
 
-        // 下载数据按钮响应
-        downloadDataButton.addEventListener("click", () => {
-            const data = {
-                positions: [{ x: 0, y: 0 }],
-                totalDistance: 0,
-                resetCount: 0
-            };
-            const jsonData = JSON.stringify(data, null, 2);
-            const blob = new Blob([jsonData], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = "data.json";
-            link.click();
-        });
-    </script>
+    <!-- 示例逻辑代码 -->
+    <script src="script/exampleLogic.js" id="logicCodeScript"></script>
+    <script src="script/environment.js"></script>
+    <!-- 逻辑代码按钮 -->
+    <script src="script/uploadLogic.js"></script>
+    <script src="script/layout.js"></script>
+    <script src="script/drawUser.js"></script>
 </body>
 
 </html>
