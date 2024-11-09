@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>User Position Tracking</title>
+    <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@3.13.0/brython.min.js"></script> -->
     <link rel="stylesheet" href="script/styles.css">
 </head>
 
@@ -12,13 +13,25 @@
         <div class="sidebar">
             <div class="config-section">
                 <h2>Configuration</h2>
-                <button id="presetVirtualSpace">Preset Virtual Space</button>
-                <button id="presetPhysicalSpace">Preset Physical Space</button>
-                <button id="presetTargets">Preset Targets</button>
+                <!-- Environment Selection Buttons -->
+                <button class="environment-button" id="environment1">Environment 1</button>
+                <button class="environment-button" id="environment2">Environment 2</button>
+                <button class="environment-button" id="environment3">Environment 3</button>
+                <button class="environment-button" id="environment4">Environment 4</button>
+                <button class="environment-button" id="environment5">Environment 5</button>
+
+                <!-- Preset Configurations (Hidden Initially) -->
+                <div class="preset-buttons hidden" id="presetContainer">
+                    <button class="preset-button" id="presetVirtualSpace">Preset Virtual Space</button>
+                    <button class="preset-button" id="presetPhysicalSpace">Preset Physical Space</button>
+                    <button class="preset-button" id="presetTargets">Preset Targets</button>
+                </div>
                 <button id="uploadConfig">Upload Config</button>
                 <button id="inputConfig">Input Config</button>
                 <input type="file" id="fileUploadInput" style="display: none;" accept=".json">
-                <button id="downloadData">Download Data</button>
+                <button id="uploadLogicCode">Upload Logic Code</button>
+                <input type="file" id="logicCodeUploadInput" style="display: none" accept=".js, .py">
+                <button id="resetLogicCode">Load Default Logic Code</button>
             </div>
             <div class="data-panel">
                 <h3>Data Panel</h3>
@@ -83,48 +96,33 @@
         </div>
     </div>
 
+    <!-- 输入配置的模态框 -->
+    <div id="inputConfigModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span id="closeModalButton" class="close-button">&times;</span>
+            <h3>input configuration</h3>
+            <textarea id="configInput" rows="20" cols="50">
+
+            </textarea>
+            <button id="submitConfigButton">Commit configuration</button>
+        </div>
+    </div>
+
+    <!-- TODO: 逻辑代码的modal框，用于展示？ -->
+    <div id="inputLogicCode">
+        <div ckass="modal-content">
+            <h3>input logic code</h3>
+            <textarea id="logicCodeInput" rows="20" cols="50"></textarea>
+        </div>
+    </div>
+
+    <!-- 示例逻辑代码 -->
+    <script src="script/exampleLogic.js" id="logicCodeScript"></script>
+    <script src="script/environment.js"></script>
+    <!-- 逻辑代码按钮 -->
+    <script src="script/uploadLogic.js"></script>
+    <script src="script/layout.js"></script>
     <script src="script/drawUser.js"></script>
-
-    <script>
-        // Local 和 Online 按钮切换逻辑
-        const localControls = document.getElementById("localControls");
-        const onlineControls = document.getElementById("onlineControls");
-
-        function toggleLocal() {
-            localControls.style.display = (localControls.style.display === "none" || localControls.style.display === "") ? "block" : "none";
-            onlineControls.style.display = "none"; // 隐藏 Online 按钮组
-        }
-
-        function toggleOnline() {
-            onlineControls.style.display = (onlineControls.style.display === "none" || onlineControls.style.display === "") ? "block" : "none";
-            localControls.style.display = "none"; // 隐藏 Local 按钮组
-        }
-
-        // 示例函数
-        function start() {
-            console.log("Local Start");
-        }
-
-        function pause() {
-            console.log("Local Pause");
-        }
-
-        function reset() {
-            console.log("Local Reset");
-        }
-
-        function startOnline() {
-            console.log("Online Start");
-        }
-
-        function pauseOnline() {
-            console.log("Online Pause");
-        }
-
-        function resetOnline() {
-            console.log("Online Reset");
-        }
-    </script>
 </body>
 
 </html>
