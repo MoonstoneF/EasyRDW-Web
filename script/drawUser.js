@@ -2,7 +2,6 @@
 const MAX_PATH_LEN = 1000;
 const delta_t = 0.02;
 const meter_per_px = 5 / 200;
-const is_universal = true;
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -602,19 +601,22 @@ function caseRunning(msg) {
     }
 }
 
-function calcMoveWithGain(trans_gain, rot_gain, cur_gain, delta) {
-    x = user_phys.x;
-    y = user_phys.y;
-    angle = user_phys.angle;
-    v = user_virt.v;
-    w = user_virt.w;
-    let trans = v / trans_gain;
+function calcMoveWithGain(user, trans_gain, rot_gain, cur_gain, delta) {
+    x = user.x;
+    y = user.y;
+    angle = user.angle;
+    v = user.v;
+    w = user.w;
 
+    let trans = v / trans_gain;
     let rot = w / rot_gain;
-    user_phys.angle += rot + trans / cur_gain;
-    user_phys.angle %= 2 * Math.PI;
-    user_phys.x += trans * Math.cos(user_phys.angle);
-    user_phys.y += trans * Math.sin(user_phys.angle);
+
+    user.angle += rot + trans / cur_gain;
+    user.angle %= 2 * Math.PI;
+    user.x += trans * Math.cos(user.angle);
+    user.y += trans * Math.sin(user.angle);
+
+    return user;
 }
 
 function caseRunningGain(msg) {
@@ -622,8 +624,7 @@ function caseRunningGain(msg) {
     if (msg.reset) {
         reset_counter++;
     }
-    let last_user_phys = { x: user_phys.x, y: user_phys.y, angle: user_phys.angle };
-    calcMoveWithGain(msg.trans_gain, msg.rot_gain, msg.cur_gain, delta_t);
+    let user_phys_new = calcMoveWithGain({ ...user_phys }, msg.trans_gain, msg.rot_gain, msg.cur_gain, delta_t);
 
     // Up reset counter
     if (msg.reset) {
@@ -634,14 +635,15 @@ function caseRunningGain(msg) {
     }
     else {
         // Calc distance
-        distance_phys += Math.sqrt((last_user_phys.x - user_phys.x) ** 2 + (last_user_phys.y - user_phys.y) ** 2);
+        distance_phys += Math.sqrt((user_phys_new.x - user_phys.x) ** 2 + (user_phys_new.y - user_phys.y) ** 2);
 
         // Reset detection
-        need_reset = checkCollisions({ x: user_phys.x, y: user_phys.y }, config.border_phys, config.obstacles_phys);
+        need_reset = checkCollisions({ x: user_phys_new.x, y: user_phys_new.y }, config.border_phys, config.obstacles_phys);
     }
 
     // Accept this frame
     if (!need_reset) {
+        user_phys = user_phys_new;
         // Update path
         if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
             path_phys.shift();
@@ -649,9 +651,6 @@ function caseRunningGain(msg) {
             path_virt.shift();
 
         updateView();
-    }
-    else {
-        user_phys = last_user_phys;
     }
 }
 
@@ -783,8 +782,8 @@ async function loopWithUploadFile() {
             if (is_universal)
                 user_phys_new = update_user({ ...user_phys }, getBoundingBox(config.border_phys), config.border_phys, config.obstacles_phys, delta_t);
             else {
-                let trans_gain, rot_gain, cur_gain_r = calc_gain({ ...user_phys }, getBoundingBox(config.border_phys), config.border_phys, config.obstacles_phys, delta_t)
-                user_phys_new = calcMoveWithGain(trans_gain, rot_gain, cur_gain_r, delta_t)
+                let gains = calc_gain({ ...user_phys }, getBoundingBox(config.border_phys), config.border_phys, config.obstacles_phys, delta_t)
+                user_phys_new = calcMoveWithGain({ ...user_phys }, gains.trans_gain, gains.rot_gain, gains.cur_gain, delta_t)
             }
 
             // Calc distance

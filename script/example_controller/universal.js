@@ -17,21 +17,22 @@ function calc_gain(user, physical_space, border, obstacles, delta) {
     } else {
         rot_dir = 1;
     }
-    const trans_gain = 1;
+    const trans_gain = 1.1;
     const rot_gain = 1;
-    const cur_gain = MIN_CUR_GAIN_R;
-    return { trans_gain, rot_gain, cur_gain, rot_dir };
+    const cur_gain = MIN_CUR_GAIN_R * rot_dir;
+    return { trans_gain, rot_gain, cur_gain };
 }
 
-function calc_move_with_gain(user, trans_gain, rot_gain, cur_gain, rot_dir, delta) {
+function calc_move_with_gain(user, trans_gain, rot_gain, cur_gain, delta) {
     x = user.x;
     y = user.y;
     angle = user.angle;
     v = user.v;
     w = user.w;
-    let trans = v / trans_gain;
 
+    let trans = v / trans_gain;
     let rot = w / rot_gain;
+
     user.angle += rot + trans / cur_gain;
     user.angle %= 2 * Math.PI;
     user.x += trans * Math.cos(user.angle);
@@ -41,8 +42,8 @@ function calc_move_with_gain(user, trans_gain, rot_gain, cur_gain, rot_dir, delt
 }
 
 function update_user(user, physical_space, border, obstacles, delta) {
-    const { trans_gain, rot_gain, cur_gain, rot_dir } = calc_gain(user, physical_space, border, obstacles, delta);
-    const new_user = calc_move_with_gain(user, trans_gain, rot_gain, cur_gain, rot_dir, delta);
+    const { trans_gain, rot_gain, cur_gain } = calc_gain(user, physical_space, border, obstacles, delta);
+    const new_user = calc_move_with_gain(user, trans_gain, rot_gain, cur_gain, delta);
     return new_user;
 }
 

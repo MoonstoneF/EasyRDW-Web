@@ -1,6 +1,11 @@
 // Local 和 Online 按钮切换逻辑
+const environmentsControls = document.getElementById("environmentControls")
 const localControls = document.getElementById("localControls");
 const onlineControls = document.getElementById("onlineControls");
+
+function toggleEnvironments() {
+    environmentsControls.style.display = (environmentsControls.style.display === "none" || environmentsControls.style.display === "") ? "block" : "none";
+}
 
 function toggleLocal() {
     localControls.style.display = (localControls.style.display === "none" || localControls.style.display === "") ? "block" : "none";
@@ -20,17 +25,6 @@ document.getElementById('uploadConfig').addEventListener('click', function () {
 // 处理输入配置的功能
 document.getElementById('inputConfig').addEventListener('click', function () {
     document.getElementById('inputConfigModal').style.display = 'block';
-});
-
-document.getElementById('submitConfigButton').addEventListener('click', function () {
-    const configInput = document.getElementById('configInput').value;
-    try {
-        config = JSON.parse(configInput); // 将输入的JSON配置更新到config
-        renderEnvironment();
-        document.getElementById('inputConfigModal').style.display = 'none';
-    } catch (e) {
-        alert('Invalid configuration');
-    }
 });
 
 document.getElementById('closeModalButton').addEventListener('click', function () {
