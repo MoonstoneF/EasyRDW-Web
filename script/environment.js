@@ -49,8 +49,8 @@
 //     });
 
 //     // 绘制用户
-//     drawUser(physCtx, config.user_phys, config.path_phys);
-//     drawUser(virtCtx, config.user_virt, config.path_virt);
+//     drawUser(physCtx, config.initial_user_phys, config.path_phys);
+//     drawUser(virtCtx, config.initial_user_virt, config.path_virt);
 // }
 
 // // 绘制多边形函数（用于边界和障碍物）
@@ -90,63 +90,277 @@
 
 // 配置环境选择按钮
 document.getElementById('environment1').addEventListener('click', function () {
-    // 设置环境1的配置数据
-    config.border_phys = [[50, 50], [250, 50], [250, 250], [50, 250]];
-    config.border_virt = [[30, 30], [270, 30], [270, 270], [30, 270]];
-    config.obstacles_phys = [[60, 60], [150, 150], [200, 100]];
-    config.obstacles_virt = [[50, 70], [180, 180], [220, 90]];
-    config.poi = [[100, 100], [200, 200]];
-    config.initial_user_phys = { x: 100, y: 100, angle: 0, v: 0, w: 0 };
-    config.initial_user_virt = { x: 150, y: 150, angle: 0, v: 0, w: 0 };
+    config = {
+        border_phys: [
+            { x: 50, y: 50 },
+            { x: 250, y: 50 },
+            { x: 250, y: 250 },
+            { x: 50, y: 250 }
+        ],
+        border_virt: [
+            { x: 30, y: 30 },
+            { x: 270, y: 30 },
+            { x: 270, y: 270 },
+            { x: 30, y: 270 }
+        ],
+        obstacles_phys: [
+            [
+                { x: 40, y: 40 },
+                { x: 40, y: 80 },
+                { x: 80, y: 80 },
+                { x: 80, y: 40 }
+            ],
+            [
+                { x: 120, y: 120 },
+                { x: 120, y: 160 },
+                { x: 160, y: 160 },
+                { x: 160, y: 120 }
+            ]
+        ],
+        obstacles_virt: [
+            [
+                { x: 50, y: 70 },
+                { x: 50, y: 110 },
+                { x: 90, y: 110 },
+                { x: 90, y: 70 }
+            ],
+            [
+                { x: 180, y: 180 },
+                { x: 180, y: 220 },
+                { x: 220, y: 220 },
+                { x: 220, y: 180 }
+            ]
+        ],
+        poi: [
+            { x: 100, y: 100 },
+            { x: 200, y: 200 }
+        ],
+        initial_user_phys: { x: 100, y: 100, angle: 0, v: 0, w: 0 },
+        initial_user_virt: { x: 150, y: 150, angle: 0, v: 0, w: 0 },
+        walk_speed: 2,
+        turn_speed: 0.1,
+    };
 
-    // 渲染环境
     updateView();
 });
 
 document.getElementById('environment2').addEventListener('click', function () {
-    config.border_phys = [[20, 20], [280, 20], [280, 280], [20, 280]];
-    config.border_virt = [[40, 40], [260, 40], [260, 260], [40, 260]];
-    config.obstacles_phys = [[80, 80], [160, 160], [240, 100]];
-    config.obstacles_virt = [[70, 100], [150, 150], [230, 110]];
-    config.poi = [[120, 120], [210, 210]];
-    config.initial_user_phys = { x: 90, y: 90, angle: 0, v: 0, w: 0 };
-    config.initial_user_virt = { x: 140, y: 140, angle: 0, v: 0, w: 0 };
+    config = {
+        border_phys: [
+            { x: 20, y: 20 },
+            { x: 280, y: 20 },
+            { x: 280, y: 280 },
+            { x: 20, y: 280 }
+        ],
+        border_virt: [
+            { x: 40, y: 40 },
+            { x: 260, y: 40 },
+            { x: 260, y: 260 },
+            { x: 40, y: 260 }
+        ],
+        obstacles_phys: [
+            [
+                { x: 80, y: 80 },
+                { x: 80, y: 120 },
+                { x: 120, y: 120 },
+                { x: 120, y: 80 }
+            ],
+            [
+                { x: 160, y: 160 },
+                { x: 160, y: 200 },
+                { x: 200, y: 200 },
+                { x: 200, y: 160 }
+            ]
+        ],
+        obstacles_virt: [
+            [
+                { x: 70, y: 100 },
+                { x: 70, y: 140 },
+                { x: 110, y: 140 },
+                { x: 110, y: 100 }
+            ],
+            [
+                { x: 150, y: 150 },
+                { x: 150, y: 190 },
+                { x: 190, y: 190 },
+                { x: 190, y: 150 }
+            ]
+        ],
+        poi: [
+            { x: 120, y: 120 },
+            { x: 210, y: 210 }
+        ],
+        initial_user_phys: { x: 90, y: 90, angle: 0, v: 0, w: 0 },
+        initial_user_virt: { x: 140, y: 140, angle: 0, v: 0, w: 0 },
+        walk_speed: 2,
+        turn_speed: 0.1,
+    };
 
     updateView();
 });
 
 document.getElementById('environment3').addEventListener('click', function () {
-    config.border_phys = [[10, 10], [290, 10], [290, 290], [10, 290]];
-    config.border_virt = [[60, 60], [240, 60], [240, 240], [60, 240]];
-    config.obstacles_phys = [[50, 150], [150, 50], [200, 200]];
-    config.obstacles_virt = [[80, 80], [190, 190], [110, 130]];
-    config.poi = [[60, 200], [190, 60], [100, 100]];
-    config.initial_user_phys = { x: 50, y: 200, angle: 0, v: 0, w: 0 };
-    config.initial_user_virt = { x: 190, y: 60, angle: 0, v: 0, w: 0 };
+    config = {
+        border_phys: [
+            { x: 10, y: 10 },
+            { x: 290, y: 10 },
+            { x: 290, y: 290 },
+            { x: 10, y: 290 }
+        ],
+        border_virt: [
+            { x: 60, y: 60 },
+            { x: 240, y: 60 },
+            { x: 240, y: 240 },
+            { x: 60, y: 240 }
+        ],
+        obstacles_phys: [
+            [
+                { x: 50, y: 150 },
+                { x: 50, y: 190 },
+                { x: 90, y: 190 },
+                { x: 90, y: 150 }
+            ],
+            [
+                { x: 150, y: 50 },
+                { x: 150, y: 90 },
+                { x: 190, y: 90 },
+                { x: 190, y: 50 }
+            ]
+        ],
+        obstacles_virt: [
+            [
+                { x: 80, y: 80 },
+                { x: 80, y: 120 },
+                { x: 120, y: 120 },
+                { x: 120, y: 80 }
+            ],
+            [
+                { x: 190, y: 190 },
+                { x: 190, y: 230 },
+                { x: 230, y: 230 },
+                { x: 230, y: 190 }
+            ]
+        ],
+        poi: [
+            { x: 60, y: 200 },
+            { x: 190, y: 60 },
+            { x: 100, y: 100 }
+        ],
+        initial_user_phys: { x: 50, y: 200, angle: 0, v: 0, w: 0 },
+        initial_user_virt: { x: 190, y: 60, angle: 0, v: 0, w: 0 },
+        walk_speed: 2,
+        turn_speed: 0.1,
+    };
 
     updateView();
 });
 
 document.getElementById('environment4').addEventListener('click', function () {
-    config.border_phys = [[30, 30], [270, 30], [270, 270], [30, 270]];
-    config.border_virt = [[20, 20], [280, 20], [280, 280], [20, 280]];
-    config.obstacles_phys = [[100, 100], [200, 50], [150, 200]];
-    config.obstacles_virt = [[120, 120], [160, 160], [210, 100]];
-    config.poi = [[130, 130], [180, 180]];
-    config.initial_user_phys = { x: 100, y: 50, angle: 0, v: 0, w: 0 };
-    config.initial_user_virt = { x: 160, y: 60, angle: 0, v: 0, w: 0 };
+    config = {
+        border_phys: [
+            { x: 30, y: 30 },
+            { x: 270, y: 30 },
+            { x: 270, y: 270 },
+            { x: 30, y: 270 }
+        ],
+        border_virt: [
+            { x: 20, y: 20 },
+            { x: 280, y: 20 },
+            { x: 280, y: 280 },
+            { x: 20, y: 280 }
+        ],
+        obstacles_phys: [
+            [
+                { x: 100, y: 100 },
+                { x: 100, y: 140 },
+                { x: 140, y: 140 },
+                { x: 140, y: 100 }
+            ],
+            [
+                { x: 200, y: 50 },
+                { x: 200, y: 90 },
+                { x: 240, y: 90 },
+                { x: 240, y: 50 }
+            ]
+        ],
+        obstacles_virt: [
+            [
+                { x: 120, y: 120 },
+                { x: 120, y: 160 },
+                { x: 160, y: 160 },
+                { x: 160, y: 120 }
+            ],
+            [
+                { x: 160, y: 160 },
+                { x: 160, y: 200 },
+                { x: 200, y: 200 },
+                { x: 200, y: 160 }
+            ]
+        ],
+        poi: [
+            { x: 130, y: 130 },
+            { x: 180, y: 180 }
+        ],
+        initial_user_phys: { x: 100, y: 50, angle: 0, v: 0, w: 0 },
+        initial_user_virt: { x: 160, y: 60, angle: 0, v: 0, w: 0 },
+        walk_speed: 2,
+        turn_speed: 0.1,
+    };
 
     updateView();
 });
 
 document.getElementById('environment5').addEventListener('click', function () {
-    config.border_phys = [[40, 40], [260, 40], [260, 260], [40, 260]];
-    config.border_virt = [[50, 50], [250, 50], [250, 250], [50, 250]];
-    config.obstacles_phys = [[75, 75], [225, 150], [125, 225]];
-    config.obstacles_virt = [[65, 95], [135, 195], [225, 105]];
-    config.poi = [[160, 160], [200, 100]];
-    config.initial_user_phys = { x: 90, y: 120, angle: 0, v: 0, w: 0 };
-    config.initial_user_virt = { x: 130, y: 160, angle: 0, v: 0, w: 0 };
+    config = {
+        border_phys: [
+            { x: 40, y: 40 },
+            { x: 260, y: 40 },
+            { x: 260, y: 260 },
+            { x: 40, y: 260 }
+        ],
+        border_virt: [
+            { x: 50, y: 50 },
+            { x: 250, y: 50 },
+            { x: 250, y: 250 },
+            { x: 50, y: 250 }
+        ],
+        obstacles_phys: [
+            [
+                { x: 75, y: 75 },
+                { x: 75, y: 115 },
+                { x: 115, y: 115 },
+                { x: 115, y: 75 }
+            ],
+            [
+                { x: 225, y: 150 },
+                { x: 225, y: 190 },
+                { x: 265, y: 190 },
+                { x: 265, y: 150 }
+            ]
+        ],
+        obstacles_virt: [
+            [
+                { x: 65, y: 95 },
+                { x: 65, y: 135 },
+                { x: 105, y: 135 },
+                { x: 105, y: 95 }
+            ],
+            [
+                { x: 135, y: 195 },
+                { x: 135, y: 235 },
+                { x: 175, y: 235 },
+                { x: 175, y: 195 }
+            ]
+        ],
+        poi: [
+            { x: 160, y: 160 },
+            { x: 200, y: 100 }
+        ],
+        initial_user_phys: { x: 90, y: 120, angle: 0, v: 0, w: 0 },
+        initial_user_virt: { x: 130, y: 160, angle: 0, v: 0, w: 0 },
+        walk_speed: 2,
+        turn_speed: 0.1,
+    };
 
     updateView();
 });

@@ -124,8 +124,10 @@ body {
 }
 
 .controls button {
-    width: 100px; /* 设置固定宽度，使按钮变窄 */
-    padding: 10px 15px; /* 调整内边距以适应较小的宽度 */
+    width: 100px;
+    /* 设置固定宽度，使按钮变窄 */
+    padding: 10px 15px;
+    /* 调整内边距以适应较小的宽度 */
     font-size: 16px;
     cursor: pointer;
     border: none;
