@@ -133,7 +133,7 @@ document.getElementById('environment1').addEventListener('click', function () {
         ],
         poi: [
             { x: 100, y: 100 },
-            { x: 200, y: 200 }
+            { x: 250, y: 200 }
         ],
         initial_user_phys: { x: 100, y: 100, angle: 0, v: 0, w: 0 },
         initial_user_virt: { x: 150, y: 150, angle: 0, v: 0, w: 0 },
@@ -244,7 +244,7 @@ document.getElementById('environment3').addEventListener('click', function () {
         poi: [
             { x: 60, y: 200 },
             { x: 190, y: 60 },
-            { x: 100, y: 100 }
+            { x: 150, y: 100 }
         ],
         initial_user_phys: { x: 50, y: 200, angle: 0, v: 0, w: 0 },
         initial_user_virt: { x: 190, y: 60, angle: 0, v: 0, w: 0 },
@@ -298,8 +298,8 @@ document.getElementById('environment4').addEventListener('click', function () {
             ]
         ],
         poi: [
-            { x: 130, y: 130 },
-            { x: 180, y: 180 }
+            { x: 100, y: 100 },
+            { x: 200, y: 200 }
         ],
         initial_user_phys: { x: 100, y: 50, angle: 0, v: 0, w: 0 },
         initial_user_virt: { x: 160, y: 60, angle: 0, v: 0, w: 0 },
