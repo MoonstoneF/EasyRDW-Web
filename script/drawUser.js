@@ -2,8 +2,7 @@
 const MAX_PATH_LEN = 1000;
 const delta_t = 0.02;
 const meter_per_px = 5 / 200;
-let scale_phys = 1;
-let scale_virt = 1;
+const is_universal = true;
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -300,9 +299,6 @@ function drawPhys() {
     ctx = canvas_phys.getContext('2d');
     ctx.clearRect(0, 0, canvas_phys.width, canvas_phys.height);
 
-    // Apply Scale
-    // ctx.scale(scale_phys, scale_phys);
-
     ctx.save();
     ctx.translate(1, 1);
 
@@ -320,8 +316,6 @@ function drawVirt() {
     ctx = canvas_virt.getContext('2d');
     ctx.clearRect(0, 0, canvas_virt.width, canvas_virt.height);
 
-    // Apply Scale
-    // ctx.scale(scale_virt, scale_virt);
     ctx.save();
     ctx.translate(1, 1);
 
@@ -778,23 +772,20 @@ async function loopWithUploadFile() {
             break;
         }
 
-        // TODO: Get new user physical with user uploaded functions
+        // Get new user physical with user uploaded functions
         if (need_reset) {
-            user_phys_new = update_reset({ ...user_phys }, getBoundingBox(config.border_phys), delta_t);
+            user_phys_new = update_reset({ ...user_phys }, getBoundingBox(config.border_phys), config.border_phys, config.obstacles_phys, delta_t);
             reset_cnt++;
             console.log("Reset: ", reset_cnt);
             need_reset = false;
         }
         else {
-            user_phys_new = update_user({ ...user_phys }, getBoundingBox(config.border_phys), delta_t);
-
-            // TODO: gain
-            // if (universal)
-            //     user_phys_new, has_reset = update_user(user_phys, config.border_phys, config.obstacles_phys, delta_t)
-            // else {
-            //     trans_gain, rot_gain, cur_gain_r = calc_gain(user_phys, config.border_phys, config.obstacles_phys, delta_t)
-            //     user_phys_new = calc_move_with_gain(user_phys, trans_gain, rot_gain, cur_gain_r, delta_t)
-            // }
+            if (is_universal)
+                user_phys_new = update_user({ ...user_phys }, getBoundingBox(config.border_phys), config.border_phys, config.obstacles_phys, delta_t);
+            else {
+                let trans_gain, rot_gain, cur_gain_r = calc_gain({ ...user_phys }, getBoundingBox(config.border_phys), config.border_phys, config.obstacles_phys, delta_t)
+                user_phys_new = calcMoveWithGain(trans_gain, rot_gain, cur_gain_r, delta_t)
+            }
 
             // Calc distance
             distance_phys += Math.sqrt((user_phys_new.x - user_phys.x) ** 2 + (user_phys_new.y - user_phys.y) ** 2);

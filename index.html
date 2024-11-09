@@ -92,15 +92,15 @@
     </div>
 
     <!-- TODO: 逻辑代码的modal框，用于展示？ -->
-    <div id="inputLogicCode">
+    <!-- <div id="inputLogicCode">
         <div ckass="modal-content">
             <h3>input logic code</h3>
             <textarea id="logicCodeInput" rows="20" cols="50"></textarea>
         </div>
-    </div>
+    </div> -->
 
     <!-- 示例逻辑代码 -->
-    <script src="script/exampleLogic.js" id="logicCodeScript"></script>
+    <script src="script/example_controller/universal.js" id="logicCodeScript"></script>
 
     <!-- 逻辑代码按钮 -->
     <script src="script/uploadLogic.js"></script>
@@ -116,7 +116,7 @@
             clearPreviousLogicCode("logicCodeScript");
             const defaultScript = document.createElement("script");
             defaultScript.id = "logicCodeScript";
-            defaultScript.src = "script/exampleLogic.js";
+            defaultScript.src = "script/example_controller/universal.js";
             document.body.appendChild(defaultScript);
 
             console.log(document.getElementById("logicCodeScript"));

@@ -1,8 +1,16 @@
+const requiredFunctions = [];
+if (is_universal) {
+    requiredFunctions = ["update_user", "update_reset"];
+}
+else {
+    requiredFunctions = ["calc_gain"];
+}
+
 // 移除先前可能存在的逻辑代码 / 装饰器
 function clearPreviousLogicCode(name) {
     console.log(`Clearing previous logic code: ${name}`);
     const existingScript = document.getElementById(name);
-    ["update_user", "update_reset"].forEach((func_name) => {
+    requiredFunctions.forEach((func_name) => {
         if (window[func_name]) {
             delete window[func_name];
         }
@@ -14,7 +22,7 @@ function clearPreviousLogicCode(name) {
 }
 
 // 添加一个监听event 加载localStorage中的逻辑代码
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
     const savedCode = localStorage.getItem('userLogicCode');
     console.log("loadUserLogic");
     if (savedCode) {
@@ -35,7 +43,6 @@ function saveUserLogic(code) {
 function process_js(code) {
     // 检查代码中是否包含示例代码中的关键函数
     // 这里的函数名可以加 无所谓
-    const requiredFunctions = ["update_user", "update_reset"];
     const hasRequiredFunctions = requiredFunctions.every(funcName => new RegExp(`function\\s+${funcName}\\s*\\(`).test(code));
 
     if (hasRequiredFunctions) {
@@ -64,7 +71,7 @@ function process_py(code) {
     const prologue = "from browser import document, window, alert, console\n\n";
     var epilogue = "\n";
     // 自带检测
-    ["update_user", "update_reset"].forEach((func_name) => {
+    requiredFunctions.forEach((func_name) => {
         const testPattern = new RegExp(`def\\s+${func_name}\\s*\\(`);
         if (testPattern.test(code)) {
             epilogue += `window.${func_name} = ${func_name}\n`;
@@ -82,7 +89,7 @@ function get_py_wrapper(code) {
     scriptwrapper.id = "logicCodeScriptWrapper";
     scriptwrapper.type = "text/javascript";
     var wrap = "";
-    ["update_user", "update_reset"].forEach((func_name) => {
+    requiredFunctions.forEach((func_name) => {
         const testPattern = new RegExp(`def\\s+${func_name}\\s*\\(`);
         if (testPattern.test(code)) {
             wrap += `function ${func_name}(...args) {\n`;
