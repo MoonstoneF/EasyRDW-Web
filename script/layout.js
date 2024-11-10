@@ -115,7 +115,7 @@ resetCodeButton.addEventListener("click", () => {
     clearPreviousLogicCode("logicCodeScript");
     const defaultScript = document.createElement("script");
     defaultScript.id = "logicCodeScript";
-    defaultScript.src = "script/exampleLogic.js";
+    defaultScript.src = "script/example_controller/universal.js";
     document.body.appendChild(defaultScript);
     console.log(document.getElementById("logicCodeScript"));
 });
