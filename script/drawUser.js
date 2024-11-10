@@ -292,8 +292,8 @@ function drawUser(ctx, user, path) {
 
 function drawPhys() {
     bbox = getBoundingBox(config.border_phys);
-    canvas_phys.width = bbox.width + 2;
-    canvas_phys.height = bbox.height + 2;
+    canvas_phys.width = bbox.x + bbox.width + 2;
+    canvas_phys.height = bbox.y + bbox.height + 2;
 
     ctx = canvas_phys.getContext('2d');
     ctx.clearRect(0, 0, canvas_phys.width, canvas_phys.height);
@@ -309,8 +309,8 @@ function drawPhys() {
 
 function drawVirt() {
     bbox = getBoundingBox(config.border_virt);
-    canvas_virt.width = bbox.width + 2;
-    canvas_virt.height = bbox.height + 2;
+    canvas_virt.width = bbox.x + bbox.width + 2;
+    canvas_virt.height = bbox.y + bbox.height + 2;
 
     ctx = canvas_virt.getContext('2d');
     ctx.clearRect(0, 0, canvas_virt.width, canvas_virt.height);
