@@ -89,6 +89,30 @@
 // }
 
 // 配置环境选择按钮
+document.getElementById('environment0').addEventListener('click', function () {
+    config = {
+        // Environments
+        border_phys: [{ x: 0, y: 0 }, { x: 0, y: 200 }, { x: 200, y: 0 }, { x: 200, y: 200 }],
+        border_virt: [{ x: 0, y: 0 }, { x: 0, y: 400 }, { x: 400, y: 0 }, { x: 400, y: 400 }],
+        obstacles_phys: [
+            [{ x: 40, y: 40 }, { x: 40, y: 80 }, { x: 80, y: 80 }, { x: 80, y: 40 }],
+            [{ x: 120, y: 120 }, { x: 120, y: 160 }, { x: 160, y: 160 }, { x: 160, y: 120 }]
+        ],
+        obstacles_virt: [],
+
+        // User config
+        poi: [{ x: 100, y: 300 }, { x: 300, y: 300 }, { x: 300, y: 100 }, { x: 100, y: 100 }],
+        walk_speed: 2,    // pixel/frame
+        turn_speed: 0.1,   // radius/frame
+
+        // User position and path in both environemnts
+        initial_user_phys: { x: 100, y: 100, angle: 0, v: 0, w: 0 },  // Initial user state
+        initial_user_virt: { x: 100, y: 100, angle: 0, v: 0, w: 0 },
+    }
+
+    updateView();
+});
+
 document.getElementById('environment1').addEventListener('click', function () {
     config = {
         border_phys: [

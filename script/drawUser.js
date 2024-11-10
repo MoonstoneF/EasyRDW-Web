@@ -261,6 +261,15 @@ function drawEnvironment(ctx, border, obstacles) {
         drawPolygon(ctx, obstacles[i]);
         ctx.fill();
     }
+
+    // Draw poi
+    if (config.poi)
+        config.poi.forEach(point => {
+            ctx.fillStyle = 'yellow';
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
+            ctx.fill();
+        });
 }
 
 // Draw the user on the canvas
