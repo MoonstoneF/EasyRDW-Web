@@ -90,19 +90,37 @@ closeModalButton.addEventListener("click", () => {
 });
 
 // Download data logic
+
 downloadDataButton.addEventListener("click", () => {
+    // 获取数据栏中显示的实时数据
+    const virtualPosition = document.getElementById("virtualPosition").innerText;
+    const physicalPosition = document.getElementById("physicalPosition").innerText;
+    const virtualDistance = document.getElementById("virtualDistance").innerText;
+    const physicalDistance = document.getElementById("physicalDistance").innerText;
+    const totalResets = document.getElementById("totalResets").innerText;
+
+    // 创建 JSON 数据
     const data = {
-        positions: [{ x: 0, y: 0 }],
-        totalDistance: 0,
-        resetCount: 0
+        virtualPosition: virtualPosition,
+        physicalPosition: physicalPosition,
+        virtualDistance: virtualDistance,
+        physicalDistance: physicalDistance,
+        totalResets: totalResets
     };
+
+    // 转换成 JSON 字符串
     const jsonData = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonData], { type: "application/json" });
     const url = URL.createObjectURL(blob);
+
+    // 创建并触发下载链接
     const link = document.createElement("a");
     link.href = url;
-    link.download = "data.json";
+    link.download = "realtime_data.json";
     link.click();
+
+    // 释放 URL 资源
+    URL.revokeObjectURL(url);
 });
 
 // Upload and reset logic code
