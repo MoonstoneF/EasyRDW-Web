@@ -48,8 +48,8 @@ let is_rotating = false;
 let in_pause_msg = {};
 let need_reset = false;
 
-let user_phys = { x: config.initial_user_phys.x, y: config.initial_user_phys.y, angle: config.initial_user_phys.angle, v: config.initial_user_phys.v, w: config.initial_user_phys.w };
-let user_virt = { x: config.initial_user_phys.x, y: config.initial_user_phys.y, angle: config.initial_user_phys.angle, v: config.initial_user_phys.v, w: config.initial_user_phys.w };
+let user_phys = { ...config.initial_user_phys };
+let user_virt = { ...config.initial_user_virt };
 let path_phys = [{ x: user_phys.x, y: user_phys.y }];
 let path_virt = [{ x: user_virt.x, y: user_virt.y }];
 
@@ -57,6 +57,14 @@ let path_virt = [{ x: user_virt.x, y: user_virt.y }];
 let reset_cnt = 0;
 let distance_phys = 0;
 let distance_virt = 0;
+const UserState = {
+    idle: "idle",
+    walk: "walk",
+    rotate: "rotate",
+};
+let csv_data = [];
+let last_user_virt = { ...config.initial_user_virt };
+let last_distance_virt = 0;
 
 function init() {
     state = SimState.before_start;
@@ -66,8 +74,8 @@ function init() {
     in_pause_msg = {};
     need_reset = false;
 
-    user_phys = { x: config.initial_user_phys.x, y: config.initial_user_phys.y, angle: config.initial_user_phys.angle, v: config.initial_user_phys.v, w: config.initial_user_phys.w };
-    user_virt = { x: config.initial_user_phys.x, y: config.initial_user_phys.y, angle: config.initial_user_phys.angle, v: config.initial_user_phys.v, w: config.initial_user_phys.w };
+    user_phys = { ...config.initial_user_phys };
+    user_virt = { ...config.initial_user_virt };
     path_phys = [{ x: user_phys.x, y: user_phys.y }];
     path_virt = [{ x: user_virt.x, y: user_virt.y }];
 
@@ -75,6 +83,8 @@ function init() {
     reset_cnt = 0;
     distance_phys = 0;
     distance_virt = 0;
+    csv_data = [];
+    last_user_virt = { ...config.initial_user_virt };
 }
 
 // ---------------------------- Pixel-meter conversion ----------------------
@@ -333,14 +343,28 @@ function drawVirt() {
 }
 
 // Function to update the HTML with variable values
+function normalizeAngle(angle) {
+    const TWO_PI = 2 * Math.PI;
+    return ((angle % TWO_PI) + TWO_PI) % TWO_PI;
+}
+
 function writeText() {
+    const new_entry = {
+        phys_x: user_phys.x * meter_per_px, phys_y: user_phys.y * meter_per_px, phys_angle: normalizeAngle(user_phys.angle),
+        virt_x: last_user_virt.x * meter_per_px, virt_y: last_user_virt.y * meter_per_px, virt_angle: normalizeAngle(last_user_virt.angle),
+        state: last_user_virt.v == 0 && last_user_virt.w == 0 ? UserState.idle : is_rotating ? UserState.rotate : UserState.walk,
+        phys_distance: distance_phys * meter_per_px, virt_distance: last_distance_virt * meter_per_px,
+        total_resets: reset_cnt,
+    };
+    csv_data.push(new_entry);
+
     document.getElementById('virtualPosition').textContent =
-        `x: ${(user_virt.x * meter_per_px).toFixed(2)} m, y: ${(user_virt.y * meter_per_px).toFixed(2)} m, angle: ${user_virt.angle.toFixed(2)}`;
+        `x: ${new_entry.virt_x.toFixed(2)} m, y: ${new_entry.virt_y.toFixed(2)} m, angle: ${new_entry.virt_angle.toFixed(2)}`;
     document.getElementById('physicalPosition').textContent =
-        `x: ${(user_phys.x * meter_per_px).toFixed(2)} m, y: ${(user_phys.y * meter_per_px).toFixed(2)} m, angle: ${user_phys.angle.toFixed(2)}`;
-    document.getElementById('virtualDistance').textContent = (distance_virt * meter_per_px).toFixed(2) + ' m';
-    document.getElementById('physicalDistance').textContent = (distance_phys * meter_per_px).toFixed(2) + ' m';
-    document.getElementById('totalResets').textContent = reset_cnt;
+        `x: ${new_entry.phys_x.toFixed(2)} m, y: ${new_entry.phys_y.toFixed(2)} m, angle: ${new_entry.phys_angle.toFixed(2)}`;
+    document.getElementById('virtualDistance').textContent = new_entry.virt_distance.toFixed(2) + ' m';
+    document.getElementById('physicalDistance').textContent = new_entry.phys_distance.toFixed(2) + ' m';
+    document.getElementById('totalResets').textContent = new_entry.total_resets;
 }
 
 function updateView() {
@@ -394,6 +418,9 @@ function walk() {
     if (poi_index >= config.poi.length) {
         return false;
     }
+
+    last_user_virt = { ...user_virt };
+    last_distance_virt = distance_virt;
 
     // Rotate/walk towards next poi with configured speed
     const target_poi = config.poi[poi_index];
@@ -764,8 +791,7 @@ function OLReset() {
 
 async function loopWithUploadFile() {
     let user_phys_new = { x: user_phys.x, y: user_phys.y, angle: user_phys.angle };
-    let has_reset = false;
-    updateView();
+    // updateView();
 
     while (1) {
         // Check state
