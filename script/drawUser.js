@@ -42,7 +42,7 @@ const SimState = {
     finnished: 3,
 }
 let state = SimState.before_start;
-
+let is_in_sim = false;
 let poi_index = 0;
 let is_rotating = false;
 let in_pause_msg = {};
@@ -344,8 +344,10 @@ function writeText() {
 }
 
 function updateView() {
-    drawVirt();
-    drawPhys();
+    if(!is_in_sim){
+        drawVirt();
+        drawPhys();
+    }
     writeText();
 }
 
@@ -483,6 +485,15 @@ function WSStart() {
     if (state == SimState.before_start) {
         sendStartMsg();
         state = SimState.running;
+        is_in_sim = false;
+    }
+}
+
+function WSSimulate() {
+    if (state == SimState.before_start) {
+        sendStartMsg();
+        state = SimState.running;
+        is_in_sim = true;
     }
 }
 
@@ -604,7 +615,9 @@ function caseRunning(msg) {
         if (path_virt.push({ x: user_virt.x, y: user_virt.y }) > MAX_PATH_LEN)
             path_virt.shift();
 
-        updateView();
+        // if(!is_in_sim){
+            updateView();
+        // }
     }
 }
 
@@ -657,7 +670,9 @@ function caseRunningGain(msg) {
         if (path_virt.push({ x: user_virt.x, y: user_virt.y }) > MAX_PATH_LEN)
             path_virt.shift();
 
-        updateView();
+        // if(!is_in_sim){
+            updateView();
+        // }
     }
 }
 
@@ -692,9 +707,10 @@ ws.onmessage = async (event) => {
                 state = SimState.finnished;
                 break;
             }
-
-            // Sleep
-            await sleep(delta_t * 1000);
+            if(!is_in_sim){
+                // Sleep
+                await sleep(delta_t * 1000);
+            }
 
             // Send next frame
             sendRunMsg();
@@ -710,8 +726,10 @@ ws.onmessage = async (event) => {
                 state = SimState.finnished;
                 break;
             }
-            // Sleep
-            await sleep(delta_t * 1000);
+            if(!is_in_sim){
+                // Sleep
+                await sleep(delta_t * 1000);
+            }
 
             // Send next frame
             sendRunMsg();
@@ -742,6 +760,15 @@ ws.onclose = () => {
 function OLStart() {
     if (state == SimState.before_start) {
         state = SimState.running;
+        is_in_sim = false;
+        loopWithUploadFile()
+    }
+}
+
+function OLSimulate() {
+    if (state == SimState.before_start) {
+        state = SimState.running;
+        is_in_sim = true;
         loopWithUploadFile()
     }
 }
@@ -820,6 +847,8 @@ async function loopWithUploadFile() {
             }
         }
         // Sleep
-        await sleep(delta_t * 1000);
+        if(!is_in_sim){
+            await sleep(delta_t * 1000);
+        }
     }
 }
