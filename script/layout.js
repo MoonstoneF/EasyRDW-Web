@@ -90,6 +90,7 @@ closeModalButton.addEventListener("click", () => {
 });
 
 // Download data logic
+
 downloadDataButton.addEventListener("click", () => {
     function downloadCSV(data, filename = 'user_path.csv') {
         // Convert array of objects to CSV string
