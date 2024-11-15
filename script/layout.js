@@ -92,35 +92,32 @@ closeModalButton.addEventListener("click", () => {
 // Download data logic
 
 downloadDataButton.addEventListener("click", () => {
-    // 获取数据栏中显示的实时数据
-    const virtualPosition = document.getElementById("virtualPosition").innerText;
-    const physicalPosition = document.getElementById("physicalPosition").innerText;
-    const virtualDistance = document.getElementById("virtualDistance").innerText;
-    const physicalDistance = document.getElementById("physicalDistance").innerText;
-    const totalResets = document.getElementById("totalResets").innerText;
+    function downloadCSV(data, filename = 'user_path.csv') {
+        // Convert array of objects to CSV string
+        const headers = Object.keys(data[0]); // Extract headers from the first object
+        const csvContent = [
+            headers.join(','), // Add header row
+            ...data.map(row => headers.map(field => JSON.stringify(row[field] ?? "")).join(',')) // Map rows to CSV
+        ].join('\n'); // Join rows with newline character
 
-    // 创建 JSON 数据
-    const data = {
-        virtualPosition: virtualPosition,
-        physicalPosition: physicalPosition,
-        virtualDistance: virtualDistance,
-        physicalDistance: physicalDistance,
-        totalResets: totalResets
-    };
+        // Create a Blob from the CSV string
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
 
-    // 转换成 JSON 字符串
-    const jsonData = JSON.stringify(data, null, 2);
-    const blob = new Blob([jsonData], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
+        // Create a temporary anchor element
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
 
-    // 创建并触发下载链接
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "realtime_data.json";
-    link.click();
+        // Append the anchor to the body and trigger the download
+        document.body.appendChild(link);
+        link.click();
 
-    // 释放 URL 资源
-    URL.revokeObjectURL(url);
+        // Clean up
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+    downloadCSV(csv_data);
 });
 
 // Upload and reset logic code
