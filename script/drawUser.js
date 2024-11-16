@@ -511,6 +511,7 @@ function walk() {
 // Buttons
 
 function WSStart() {
+    document.getElementById('simComplete').textContent="";
     if (state == SimState.before_start) {
         sendStartMsg();
         state = SimState.running;
@@ -519,6 +520,7 @@ function WSStart() {
 }
 
 function WSSimulate() {
+    document.getElementById('simComplete').textContent="";
     if (state == SimState.before_start) {
         sendStartMsg();
         state = SimState.running;
@@ -527,6 +529,7 @@ function WSSimulate() {
 }
 
 function WSPause() {
+    document.getElementById('simComplete').textContent="";
     if (state == SimState.running) {
         state = SimState.paused;
     }
@@ -537,6 +540,7 @@ function WSPause() {
 }
 
 function WSReset() {
+    document.getElementById('simComplete').textContent="";
     if (state == SimState.running || state == SimState.paused || state == SimState.finnished) {
         if (state != SimState.finnished) {
             sendEndMsg();
@@ -617,6 +621,9 @@ function sendRunMsg() {
 
 function sendEndMsg() {
     ws.send(JSON.stringify(EndMsg()));
+    if(is_in_sim){
+        document.getElementById('simComplete').textContent="Simulation Completed!";
+    }
 }
 function caseRunning(msg) {
     // Up reset counter
@@ -790,6 +797,7 @@ ws.onclose = () => {
 // Buttons
 
 function OLStart() {
+    document.getElementById('simComplete').textContent="";
     if (state == SimState.before_start) {
         state = SimState.running;
         is_in_sim = false;
@@ -798,6 +806,7 @@ function OLStart() {
 }
 
 function OLSimulate() {
+    document.getElementById('simComplete').textContent="";
     if (state == SimState.before_start) {
         state = SimState.running;
         is_in_sim = true;
@@ -806,6 +815,7 @@ function OLSimulate() {
 }
 
 function OLPause() {
+    document.getElementById('simComplete').textContent="";
     if (state == SimState.running) {
         state = SimState.paused;
     }
@@ -815,6 +825,7 @@ function OLPause() {
 }
 
 function OLReset() {
+    document.getElementById('simComplete').textContent="";
     if (state == SimState.running || state == SimState.paused || state == SimState.finnished) {
         init();
         updateView();
@@ -875,6 +886,9 @@ async function loopWithUploadFile() {
             if (!walk()) {
                 // Finish simulation
                 state = SimState.finnished;
+                if(is_in_sim){
+                    document.getElementById('simComplete').textContent="Simulation Completed!";
+                }
                 break;
             }
         }
