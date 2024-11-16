@@ -1,10 +1,21 @@
-const requiredFunctions = [];
-if (is_universal) {
-    requiredFunctions = ["update_user", "update_reset"];
+let requiredFunctions = [];
+let is_universal = true;
+
+const toggle_universal = document.getElementById("toggleUniversal");
+
+function toggleUniversal() {
+    is_universal = !is_universal;
+    if (is_universal) {
+        toggle_universal.textContent = "Universal";
+        requiredFunctions = ["update_user", "update_reset"];
+
+    }
+    else {
+        toggle_universal.textContent = "Gain";
+        requiredFunctions = ["calc_gain"];
+    }
 }
-else {
-    requiredFunctions = ["calc_gain"];
-}
+
 
 // 移除先前可能存在的逻辑代码 / 装饰器
 function clearPreviousLogicCode(name) {

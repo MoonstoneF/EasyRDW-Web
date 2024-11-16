@@ -1,6 +1,11 @@
 // Local 和 Online 按钮切换逻辑
+const environmentsControls = document.getElementById("environmentControls")
 const localControls = document.getElementById("localControls");
 const onlineControls = document.getElementById("onlineControls");
+
+function toggleEnvironments() {
+    environmentsControls.style.display = (environmentsControls.style.display === "none" || environmentsControls.style.display === "") ? "block" : "none";
+}
 
 function toggleLocal() {
     localControls.style.display = (localControls.style.display === "none" || localControls.style.display === "") ? "block" : "none";
@@ -20,17 +25,6 @@ document.getElementById('uploadConfig').addEventListener('click', function () {
 // 处理输入配置的功能
 document.getElementById('inputConfig').addEventListener('click', function () {
     document.getElementById('inputConfigModal').style.display = 'block';
-});
-
-document.getElementById('submitConfigButton').addEventListener('click', function () {
-    const configInput = document.getElementById('configInput').value;
-    try {
-        config = JSON.parse(configInput); // 将输入的JSON配置更新到config
-        renderEnvironment();
-        document.getElementById('inputConfigModal').style.display = 'none';
-    } catch (e) {
-        alert('Invalid configuration');
-    }
 });
 
 document.getElementById('closeModalButton').addEventListener('click', function () {
@@ -96,19 +90,34 @@ closeModalButton.addEventListener("click", () => {
 });
 
 // Download data logic
+
 downloadDataButton.addEventListener("click", () => {
-    const data = {
-        positions: [{ x: 0, y: 0 }],
-        totalDistance: 0,
-        resetCount: 0
-    };
-    const jsonData = JSON.stringify(data, null, 2);
-    const blob = new Blob([jsonData], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "data.json";
-    link.click();
+    function downloadCSV(data, filename = 'user_path.csv') {
+        // Convert array of objects to CSV string
+        const headers = Object.keys(data[0]); // Extract headers from the first object
+        const csvContent = [
+            headers.join(','), // Add header row
+            ...data.map(row => headers.map(field => JSON.stringify(row[field] ?? "")).join(',')) // Map rows to CSV
+        ].join('\n'); // Join rows with newline character
+
+        // Create a Blob from the CSV string
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+        // Create a temporary anchor element
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+
+        // Append the anchor to the body and trigger the download
+        document.body.appendChild(link);
+        link.click();
+
+        // Clean up
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+    downloadCSV(csv_data);
 });
 
 // Upload and reset logic code
@@ -121,7 +130,7 @@ resetCodeButton.addEventListener("click", () => {
     clearPreviousLogicCode("logicCodeScript");
     const defaultScript = document.createElement("script");
     defaultScript.id = "logicCodeScript";
-    defaultScript.src = "script/exampleLogic.js";
+    defaultScript.src = "script/example_controller/universal.js";
     document.body.appendChild(defaultScript);
     console.log(document.getElementById("logicCodeScript"));
 });

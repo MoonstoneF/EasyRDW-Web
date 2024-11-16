@@ -2,7 +2,6 @@
 const MAX_PATH_LEN = 1000;
 const delta_t = 0.02;
 const meter_per_px = 5 / 200;
-const is_universal = true;
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -43,14 +42,14 @@ const SimState = {
     finnished: 3,
 }
 let state = SimState.before_start;
-
+let is_in_sim = false;
 let poi_index = 0;
 let is_rotating = false;
 let in_pause_msg = {};
 let need_reset = false;
 
-let user_phys = { x: config.initial_user_phys.x, y: config.initial_user_phys.y, angle: config.initial_user_phys.angle, v: config.initial_user_phys.v, w: config.initial_user_phys.w };
-let user_virt = { x: config.initial_user_phys.x, y: config.initial_user_phys.y, angle: config.initial_user_phys.angle, v: config.initial_user_phys.v, w: config.initial_user_phys.w };
+let user_phys = { ...config.initial_user_phys };
+let user_virt = { ...config.initial_user_virt };
 let path_phys = [{ x: user_phys.x, y: user_phys.y }];
 let path_virt = [{ x: user_virt.x, y: user_virt.y }];
 
@@ -58,6 +57,14 @@ let path_virt = [{ x: user_virt.x, y: user_virt.y }];
 let reset_cnt = 0;
 let distance_phys = 0;
 let distance_virt = 0;
+const UserState = {
+    idle: "idle",
+    walk: "walk",
+    rotate: "rotate",
+};
+let csv_data = [];
+let log_user_virt = { ...config.initial_user_virt };
+let log_distance_virt = 0;
 
 function init() {
     state = SimState.before_start;
@@ -67,8 +74,8 @@ function init() {
     in_pause_msg = {};
     need_reset = false;
 
-    user_phys = { x: config.initial_user_phys.x, y: config.initial_user_phys.y, angle: config.initial_user_phys.angle, v: config.initial_user_phys.v, w: config.initial_user_phys.w };
-    user_virt = { x: config.initial_user_phys.x, y: config.initial_user_phys.y, angle: config.initial_user_phys.angle, v: config.initial_user_phys.v, w: config.initial_user_phys.w };
+    user_phys = { ...config.initial_user_phys };
+    user_virt = { ...config.initial_user_virt };
     path_phys = [{ x: user_phys.x, y: user_phys.y }];
     path_virt = [{ x: user_virt.x, y: user_virt.y }];
 
@@ -76,6 +83,9 @@ function init() {
     reset_cnt = 0;
     distance_phys = 0;
     distance_virt = 0;
+    csv_data = [];
+    log_user_virt = { ...config.initial_user_virt };
+    log_distance_virt = 0;
 }
 
 // ---------------------------- Pixel-meter conversion ----------------------
@@ -293,8 +303,8 @@ function drawUser(ctx, user, path) {
 
 function drawPhys() {
     bbox = getBoundingBox(config.border_phys);
-    canvas_phys.width = bbox.width + 2;
-    canvas_phys.height = bbox.height + 2;
+    canvas_phys.width = bbox.x + bbox.width + 2;
+    canvas_phys.height = bbox.y + bbox.height + 2;
 
     ctx = canvas_phys.getContext('2d');
     ctx.clearRect(0, 0, canvas_phys.width, canvas_phys.height);
@@ -310,8 +320,8 @@ function drawPhys() {
 
 function drawVirt() {
     bbox = getBoundingBox(config.border_virt);
-    canvas_virt.width = bbox.width + 2;
-    canvas_virt.height = bbox.height + 2;
+    canvas_virt.width = bbox.x + bbox.width + 2;
+    canvas_virt.height = bbox.y + bbox.height + 2;
 
     ctx = canvas_virt.getContext('2d');
     ctx.clearRect(0, 0, canvas_virt.width, canvas_virt.height);
@@ -320,6 +330,13 @@ function drawVirt() {
     ctx.translate(1, 1);
 
     drawEnvironment(ctx, config.border_virt, config.obstacles_virt);
+    // Draw poi
+    config.poi.forEach(point => {
+        ctx.fillStyle = 'yellow';
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+    });
     drawUser(ctx, user_virt, path_virt);
 
     ctx.restore();
@@ -327,19 +344,35 @@ function drawVirt() {
 }
 
 // Function to update the HTML with variable values
+function normalizeAngle(angle) {
+    const TWO_PI = 2 * Math.PI;
+    return ((angle % TWO_PI) + TWO_PI) % TWO_PI;
+}
+
 function writeText() {
+    const new_entry = {
+        phys_x: user_phys.x * meter_per_px, phys_y: user_phys.y * meter_per_px, phys_angle: normalizeAngle(user_phys.angle),
+        virt_x: log_user_virt.x * meter_per_px, virt_y: log_user_virt.y * meter_per_px, virt_angle: normalizeAngle(log_user_virt.angle),
+        state: log_user_virt.v == 0 && log_user_virt.w == 0 ? UserState.idle : is_rotating ? UserState.rotate : UserState.walk,
+        phys_distance: distance_phys * meter_per_px, virt_distance: log_distance_virt * meter_per_px,
+        total_resets: reset_cnt,
+    };
+    csv_data.push(new_entry);
+
     document.getElementById('virtualPosition').textContent =
-        `x: ${(user_virt.x * meter_per_px).toFixed(2)} m, y: ${(user_virt.y * meter_per_px).toFixed(2)} m, angle: ${user_virt.angle.toFixed(2)}`;
+        `x: ${new_entry.virt_x.toFixed(2)} m, y: ${new_entry.virt_y.toFixed(2)} m, angle: ${new_entry.virt_angle.toFixed(2)}`;
     document.getElementById('physicalPosition').textContent =
-        `x: ${(user_phys.x * meter_per_px).toFixed(2)} m, y: ${(user_phys.y * meter_per_px).toFixed(2)} m, angle: ${user_phys.angle.toFixed(2)}`;
-    document.getElementById('virtualDistance').textContent = (distance_virt * meter_per_px).toFixed(2) + ' m';
-    document.getElementById('physicalDistance').textContent = (distance_phys * meter_per_px).toFixed(2) + ' m';
-    document.getElementById('totalResets').textContent = reset_cnt;
+        `x: ${new_entry.phys_x.toFixed(2)} m, y: ${new_entry.phys_y.toFixed(2)} m, angle: ${new_entry.phys_angle.toFixed(2)}`;
+    document.getElementById('virtualDistance').textContent = new_entry.virt_distance.toFixed(2) + ' m';
+    document.getElementById('physicalDistance').textContent = new_entry.phys_distance.toFixed(2) + ' m';
+    document.getElementById('totalResets').textContent = new_entry.total_resets;
 }
 
 function updateView() {
-    drawVirt();
-    drawPhys();
+    if (!is_in_sim) {
+        drawVirt();
+        drawPhys();
+    }
     writeText();
 }
 
@@ -388,6 +421,9 @@ function walk() {
     if (poi_index >= config.poi.length) {
         return false;
     }
+
+    log_user_virt = { ...user_virt };
+    log_distance_virt = distance_virt;
 
     // Rotate/walk towards next poi with configured speed
     const target_poi = config.poi[poi_index];
@@ -477,6 +513,15 @@ function WSStart() {
     if (state == SimState.before_start) {
         sendStartMsg();
         state = SimState.running;
+        is_in_sim = false;
+    }
+}
+
+function WSSimulate() {
+    if (state == SimState.before_start) {
+        sendStartMsg();
+        state = SimState.running;
+        is_in_sim = true;
     }
 }
 
@@ -598,60 +643,62 @@ function caseRunning(msg) {
         if (path_virt.push({ x: user_virt.x, y: user_virt.y }) > MAX_PATH_LEN)
             path_virt.shift();
 
+        // if(!is_in_sim){
         updateView();
+        // }
     }
 }
 
-function calcMoveWithGain(trans_gain, rot_gain, cur_gain, delta) {
-    x = user_phys.x;
-    y = user_phys.y;
-    angle = user_phys.angle;
-    v = user_virt.v;
-    w = user_virt.w;
-    let trans = v / trans_gain;
+function calcMoveWithGain(user, trans_gain, rot_gain, cur_gain, delta) {
+    x = user.x;
+    y = user.y;
+    angle = user.angle;
+    v = user.v;
+    w = user.w;
 
+    let trans = v / trans_gain;
     let rot = w / rot_gain;
-    user_phys.angle += rot + trans / cur_gain;
-    user_phys.angle %= 2 * Math.PI;
-    user_phys.x += trans * Math.cos(user_phys.angle);
-    user_phys.y += trans * Math.sin(user_phys.angle);
+
+    user.angle += rot + trans / cur_gain;
+    user.angle %= 2 * Math.PI;
+    user.x += trans * Math.cos(user.angle);
+    user.y += trans * Math.sin(user.angle);
+
+    return user;
 }
 
 function caseRunningGain(msg) {
-    // Up reset counter
-    if (msg.reset) {
-        reset_counter++;
-    }
-    let last_user_phys = { x: user_phys.x, y: user_phys.y, angle: user_phys.angle };
-    calcMoveWithGain(msg.trans_gain, msg.rot_gain, msg.cur_gain, delta_t);
+    let user_phys_new = { ...user_phys };
 
     // Up reset counter
     if (msg.reset) {
+        user_phys_new = update_reset({ ...user_phys }, getBoundingBox(config.border_phys), config.border_phys, config.obstacles_phys, delta_t);
         reset_cnt++;
         console.log("Reset: ", reset_cnt);
 
         need_reset = false;
     }
     else {
+        user_phys_new = calcMoveWithGain({ ...user_phys }, msg.trans_gain, msg.rot_gain, msg.cur_gain, delta_t);
         // Calc distance
-        distance_phys += Math.sqrt((last_user_phys.x - user_phys.x) ** 2 + (last_user_phys.y - user_phys.y) ** 2);
+        distance_phys += Math.sqrt((user_phys_new.x - user_phys.x) ** 2 + (user_phys_new.y - user_phys.y) ** 2);
 
         // Reset detection
-        need_reset = checkCollisions({ x: user_phys.x, y: user_phys.y }, config.border_phys, config.obstacles_phys);
+        need_reset = checkCollisions({ x: user_phys_new.x, y: user_phys_new.y }, config.border_phys, config.obstacles_phys);
     }
 
     // Accept this frame
     if (!need_reset) {
+        user_phys = { x: user_phys_new.x, y: user_phys_new.y, angle: user_phys_new.angle, v: user_virt.v, w: user_virt.w }
         // Update path
         if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
             path_phys.shift();
         if (path_virt.push({ x: user_virt.x, y: user_virt.y }) > MAX_PATH_LEN)
             path_virt.shift();
 
+        // if(!is_in_sim){
         updateView();
-    }
-    else {
-        user_phys = last_user_phys;
+        // }
     }
 }
 
@@ -687,8 +734,13 @@ ws.onmessage = async (event) => {
                 break;
             }
 
-            // Sleep
-            await sleep(delta_t * 1000);
+            log_user_virt = { ...user_virt };
+            log_distance_virt = distance_virt;
+
+            if (!is_in_sim) {
+                // Sleep
+                await sleep(delta_t * 1000);
+            }
 
             // Send next frame
             sendRunMsg();
@@ -704,8 +756,11 @@ ws.onmessage = async (event) => {
                 state = SimState.finnished;
                 break;
             }
-            // Sleep
-            await sleep(delta_t * 1000);
+
+            if (!is_in_sim) {
+                // Sleep
+                await sleep(delta_t * 1000);
+            }
 
             // Send next frame
             sendRunMsg();
@@ -736,6 +791,15 @@ ws.onclose = () => {
 function OLStart() {
     if (state == SimState.before_start) {
         state = SimState.running;
+        is_in_sim = false;
+        loopWithUploadFile()
+    }
+}
+
+function OLSimulate() {
+    if (state == SimState.before_start) {
+        state = SimState.running;
+        is_in_sim = true;
         loopWithUploadFile()
     }
 }
@@ -758,8 +822,7 @@ function OLReset() {
 
 async function loopWithUploadFile() {
     let user_phys_new = { x: user_phys.x, y: user_phys.y, angle: user_phys.angle };
-    let has_reset = false;
-    updateView();
+    // updateView();
 
     while (1) {
         // Check state
@@ -780,11 +843,12 @@ async function loopWithUploadFile() {
             need_reset = false;
         }
         else {
-            if (is_universal)
+            if (is_universal) {
                 user_phys_new = update_user({ ...user_phys }, getBoundingBox(config.border_phys), config.border_phys, config.obstacles_phys, delta_t);
+            }
             else {
-                let trans_gain, rot_gain, cur_gain_r = calc_gain({ ...user_phys }, getBoundingBox(config.border_phys), config.border_phys, config.obstacles_phys, delta_t)
-                user_phys_new = calcMoveWithGain(trans_gain, rot_gain, cur_gain_r, delta_t)
+                let gains = calc_gain({ ...user_phys }, getBoundingBox(config.border_phys), config.border_phys, config.obstacles_phys, delta_t)
+                user_phys_new = calcMoveWithGain({ ...user_phys }, gains.trans_gain, gains.rot_gain, gains.cur_gain, delta_t);
             }
 
             // Calc distance
@@ -814,6 +878,8 @@ async function loopWithUploadFile() {
             }
         }
         // Sleep
-        await sleep(delta_t * 1000);
+        if (!is_in_sim) {
+            await sleep(delta_t * 1000);
+        }
     }
 }
