@@ -28,7 +28,7 @@ let config = {
     turn_speed: 0.1,   // radius/frame
 
     // User position and path in both environemnts
-    initial_user_phys: { x: 180, y: 100, angle: 0, v: 0, w: 0 },  // Initial user state
+    initial_user_phys: { x: 100, y: 100, angle: 0, v: 0, w: 0 },  // Initial user state
     initial_user_virt: { x: 100, y: 100, angle: 0, v: 0, w: 0 },
 }
 
@@ -168,6 +168,7 @@ function loadConfig() {
     const savedConfig = localStorage.getItem('config');
     if (savedConfig) {
         config = JSON.parse(savedConfig); // Parse the JSON string back into an object
+        init();
         updateView();
     }
 }

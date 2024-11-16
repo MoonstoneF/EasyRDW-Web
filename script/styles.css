@@ -103,7 +103,7 @@ body {
     /* 占据整个右侧宽度 */
     max-height: 70vh;
     /* 限制最大高度为视口的 70% */
-    min-height: 400px;
+    min-height: 450px;
     /* 设置一个最小高度，避免内容少时过于压缩 */
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
     /* 更明显的阴影 */

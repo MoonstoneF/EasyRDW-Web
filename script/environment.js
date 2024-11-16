@@ -110,6 +110,8 @@ document.getElementById('environment0').addEventListener('click', function () {
         initial_user_virt: { x: 100, y: 100, angle: 0, v: 0, w: 0 },
     }
 
+    saveConfig();
+    init();
     updateView();
 });
 
@@ -165,6 +167,8 @@ document.getElementById('environment1').addEventListener('click', function () {
         turn_speed: 0.1,
     };
 
+    saveConfig();
+    init();
     updateView();
 });
 
@@ -214,12 +218,14 @@ document.getElementById('environment2').addEventListener('click', function () {
             { x: 120, y: 120 },
             { x: 130, y: 210 }
         ],
-        initial_user_phys: { x: 90, y: 90, angle: 0, v: 0, w: 0 },
+        initial_user_phys: { x: 50, y: 50, angle: 0, v: 0, w: 0 },
         initial_user_virt: { x: 140, y: 140, angle: 0, v: 0, w: 0 },
         walk_speed: 2,
         turn_speed: 0.1,
     };
 
+    saveConfig();
+    init();
     updateView();
 });
 
@@ -276,6 +282,8 @@ document.getElementById('environment3').addEventListener('click', function () {
         turn_speed: 0.1,
     };
 
+    saveConfig();
+    init();
     updateView();
 });
 
@@ -331,6 +339,8 @@ document.getElementById('environment4').addEventListener('click', function () {
         turn_speed: 0.1,
     };
 
+    saveConfig();
+    init();
     updateView();
 });
 
@@ -386,5 +396,7 @@ document.getElementById('environment5').addEventListener('click', function () {
         turn_speed: 0.1,
     };
 
+    saveConfig();
+    init();
     updateView();
 });

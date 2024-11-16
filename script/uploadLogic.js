@@ -1,17 +1,18 @@
 let requiredFunctions = [];
 let is_universal = true;
 
-const toggle_universal = document.getElementById("toggleUniversal");
+// const toggle_universal = document.getElementById("toggleUniversal");
+const online_button = document.getElementById("onlineButton");
 
 function toggleUniversal() {
     is_universal = !is_universal;
     if (is_universal) {
-        toggle_universal.textContent = "Universal";
+        online_button.textContent = "Online - Position";
         requiredFunctions = ["update_user", "update_reset"];
 
     }
     else {
-        toggle_universal.textContent = "Gain";
+        online_button.textContent = "Online - Gain";
         requiredFunctions = ["calc_gain"];
     }
 }
