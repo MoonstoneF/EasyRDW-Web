@@ -14,32 +14,25 @@
             <div class="config-section">
                 <h2>Configuration</h2>
                 <!-- Environment Selection Buttons -->
-                <button class="environment-button" id="environment1">Environment 1</button>
-                <button class="environment-button" id="environment2">Environment 2</button>
-                <button class="environment-button" id="environment3">Environment 3</button>
-                <button class="environment-button" id="environment4">Environment 4</button>
-                <button class="environment-button" id="environment5">Environment 5</button>
+                <button id="environment-buttons" class="environment-button" onclick="toggleEnvironments()">Environments</button>
 
                 <!-- Preset Configurations (Hidden Initially) -->
-                <div class="preset-buttons hidden" id="presetContainer">
+                <!-- <div class="preset-buttons hidden" id="presetContainer">
                     <button class="preset-button" id="presetVirtualSpace">Preset Virtual Space</button>
                     <button class="preset-button" id="presetPhysicalSpace">Preset Physical Space</button>
                     <button class="preset-button" id="presetTargets">Preset Targets</button>
+                </div> -->
+                <button class="environment-button" id="uploadConfig">Upload Config</button>
+                <button class="environment-button" id="inputConfig">Input Config</button>
+                <button class="environment-button" id="downloadData">Download Data</button>
+                <div id="environmentControls" style="display: none;">
+                    <button class="popup-button" id="environment0">Environment 0</button>
+                    <button class="popup-button" id="environment1">Environment 1</button>
+                    <button class="popup-button" id="environment2">Environment 2</button>
+                    <button class="popup-button" id="environment3">Environment 3</button>
+                    <button class="popup-button" id="environment4">Environment 4</button>
+                    <button class="popup-button" id="environment5">Environment 5</button>
                 </div>
-                <button id="uploadConfig">Upload Config</button>
-                <button id="inputConfig">Input Config</button>
-                <input type="file" id="fileUploadInput" style="display: none;" accept=".json">
-                <button id="uploadLogicCode">Upload Logic Code</button>
-                <input type="file" id="logicCodeUploadInput" style="display: none" accept=".js, .py">
-                <button id="resetLogicCode">Load Default Logic Code</button>
-            </div>
-            <div class="data-panel">
-                <h3>Data Panel</h3>
-                <div class="data-item">Virtual Position: <span id="virtualPosition">(0, 0)</span></div>
-                <div class="data-item">Physical Position: <span id="physicalPosition">(0, 0)</span></div>
-                <div class="data-item">Virtual Distance: <span id="virtualDistance">0 m</span></div>
-                <div class="data-item">Physical Distance: <span id="physicalDistance">0 m</span></div>
-                <div class="data-item">Total Resets: <span id="totalResets">0</span></div>
             </div>
         </div>
         <div class="main-content">
@@ -77,20 +70,34 @@
                     </div>
                 </div>
             </div>
-            <div class="controls">
-                <button id="localButton" onclick="toggleLocal()">Local</button>
-                <button id="onlineButton" onclick="toggleOnline()">Online</button>
 
+        </div>
+
+        <div class="data-panel">
+                <h3>Data Panel</h3>
+                <div class="data-item">Virtual Position: <span id="virtualPosition">(0, 0)</span></div>
+                <div class="data-item">Physical Position: <span id="physicalPosition">(0, 0)</span></div>
+                <div class="data-item">Virtual Distance: <span id="virtualDistance">0 m</span></div>
+                <div class="data-item">Physical Distance: <span id="physicalDistance">0 m</span></div>
+                <div class="data-item">Total Resets: <span id="totalResets">0</span></div>
+            <div class="controls">
+            <button id="localButton" class="controls-button" onclick="toggleLocal()">Local</button>
                 <div id="localControls" style="display: none;">
-                    <button id="startButton1" onclick="WSStart()">Start</button>
-                    <button id="pauseButton1" onclick="WSPause()">Pause</button>
-                    <button id="resetButton1" onclick="WSReset()">Reset</button>
+                <button id="startButton1" class="popup-button" onclick="WSStart()">Start</button>
+                <button id="pauseButton1" class="popup-button" onclick="WSPause()">Pause</button>
+                    <button id="resetButton1" class="popup-button" onclick="WSReset()">Reset</button>
                 </div>
 
+                <button id="onlineButton" class="controls-button" onclick="toggleOnline()">Online</button>
                 <div id="onlineControls" style="display: none;">
-                    <button id="startButton2" onclick="OLStart()">Start</button>
-                    <button id="pauseButton2" onclick="OLPause()">Pause</button>
-                    <button id="resetButton2" onclick="OLReset()">Reset</button>
+                    <button id="startButton2" class="popup-button" onclick="OLStart()">Start</button>
+                    <button id="pauseButton2" class="popup-button" onclick="OLPause()">Pause</button>
+                    <button id="resetButton2" class="popup-button" onclick="OLReset()">Reset</button>
+                    <input type="file" id="fileUploadInput" style="display: none;" accept=".json">
+                    <button id="uploadLogicCode" class="popup-button">Upload Code</button>
+                    <input type="file" id="logicCodeUploadInput" style="display: none" accept=".js, .py">
+                    <button id="resetLogicCode" class="popup-button">Default Code</button>
+                    <button id="toggleUniversal" class="popup-button" onclick="toggleUniversal()">Universal</button>
                 </div>
             </div>
         </div>
@@ -121,138 +128,10 @@
 
     <!-- 逻辑代码按钮 -->
     <script src="script/uploadLogic.js"></script>
-    <script>
-        const uploadCodeButton = document.getElementById("uploadLogicCode");
-        const codeUploadInput = document.getElementById("logicCodeUploadInput");
-
-        const resetCodeButton = document.getElementById("resetLogicCode");
-
-        // 重置逻辑
-        resetCodeButton.addEventListener("click", () => {
-            localStorage.removeItem("userLogicCode");
-            clearPreviousLogicCode("logicCodeScript");
-            const defaultScript = document.createElement("script");
-            defaultScript.id = "logicCodeScript";
-            defaultScript.src = "script/example_controller/universal.js";
-            document.body.appendChild(defaultScript);
-
-            console.log(document.getElementById("logicCodeScript"));
-        })
-
-        // 上传逻辑代码按钮响应
-        uploadCodeButton.addEventListener("click", () => {
-            codeUploadInput.click();
-        });
-
-        codeUploadInput.addEventListener("change", (event) => {
-            const file = event.target.files[0];
-            // 可能没有文件
-            if (file) {
-                const reader = new FileReader();
-                try {
-                    console.log("logic code file " + file.name + " is uploaded");
-                    reader.onload = function (e) {
-                        const fileContent = e.target.result;
-                        if (file.name.slice(-3) === ".js") {
-                            // 新增一个script文件注入
-                            console.log("injecting js logic code");
-                            // 添加新的
-                            process_js(fileContent);
-
-                            // 目前没有实现display
-                        }
-                        else if (file.name.slice(-3) === ".py") { // python
-                            console.log("injecting python logic code");
-                            // 添加新的
-                            process_py(fileContent);
-                            get_py_wrapper(fileContent);
-
-                            // 目前没有实现display
-                        }
-                        else {
-                            alert("format not supported");
-                        }
-                    };
-                } catch (error) {
-                    // 无效的Javascript或Python格式
-                    alert("Invalidformat");
-                }
-                reader.readAsText(file);
-                codeUploadInput.value = "";
-            }
-        })  
-    </script>
-
-    <script src="script/drawUser.js"></script>
-
-    <script>
-        // 获取按钮和元素
-        const uploadConfigButton = document.getElementById("uploadConfig");
-        const inputConfigButton = document.getElementById("inputConfig");
-        const downloadDataButton = document.getElementById("downloadData");
-        const fileUploadInput = document.getElementById("fileUploadInput");
-        const inputConfigModal = document.getElementById("inputConfigModal");
-        const configInput = document.getElementById("configInput");
-        const submitConfigButton = document.getElementById("submitConfigButton");
-        const closeModalButton = document.getElementById("closeModalButton");
-
-        // 上传配置按钮响应
-        uploadConfigButton.addEventListener("click", () => {
-            fileUploadInput.click();
-        });
-
-        fileUploadInput.addEventListener("change", (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    try {
-                        const configData = JSON.parse(e.target.result);
-                        config = convertConfigToPixels(configData);
-                        console.log("Uploaded Config (in pixels):", config);
-                        saveConfig();
-                        updateView();
-                    } catch (error) {
-                        alert("Invalid JSON format");
-                    }
-                };
-                reader.readAsText(file);
-            }
-        });
-
-        // 打开输入配置的模态框
-        inputConfigButton.addEventListener("click", () => {
-            inputConfigModal.style.display = "block";
-            configInput.value = JSON.stringify(convertConfigToCoords(config), undefined, 4);
-        });
-
-        // 提交输入的配置数据
-        submitConfigButton.addEventListener("click", () => {
-            const configData = configInput.value;
-            try {
-                const parsedConfig = JSON.parse(configData);
-                config = convertConfigToPixels(parsedConfig);
-                console.log("Input Config (in pixels):", config);
-                saveConfig();
-                updateView();
-            } catch (error) {
-                alert("Invalid JSON format");
-            }
-            inputConfigModal.style.display = "none";
-        });
-
-        // 关闭模态框
-        closeModalButton.addEventListener("click", () => {
-            inputConfigModal.style.display = "none";
-        });
-
-    <!-- 示例逻辑代码 -->
-    <script src="script/exampleLogic.js" id="logicCodeScript"></script>
     <script src="script/environment.js"></script>
-    <!-- 逻辑代码按钮 -->
-    <script src="script/uploadLogic.js"></script>
     <script src="script/layout.js"></script>
     <script src="script/drawUser.js"></script>
+
 </body>
 
 </html>
