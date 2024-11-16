@@ -63,8 +63,8 @@ const UserState = {
     rotate: "rotate",
 };
 let csv_data = [];
-let last_user_virt = { ...config.initial_user_virt };
-let last_distance_virt = 0;
+let log_user_virt = { ...config.initial_user_virt };
+let log_distance_virt = 0;
 
 function init() {
     state = SimState.before_start;
@@ -84,7 +84,8 @@ function init() {
     distance_phys = 0;
     distance_virt = 0;
     csv_data = [];
-    last_user_virt = { ...config.initial_user_virt };
+    log_user_virt = { ...config.initial_user_virt };
+    log_distance_virt = 0;
 }
 
 // ---------------------------- Pixel-meter conversion ----------------------
@@ -351,9 +352,9 @@ function normalizeAngle(angle) {
 function writeText() {
     const new_entry = {
         phys_x: user_phys.x * meter_per_px, phys_y: user_phys.y * meter_per_px, phys_angle: normalizeAngle(user_phys.angle),
-        virt_x: last_user_virt.x * meter_per_px, virt_y: last_user_virt.y * meter_per_px, virt_angle: normalizeAngle(last_user_virt.angle),
-        state: last_user_virt.v == 0 && last_user_virt.w == 0 ? UserState.idle : is_rotating ? UserState.rotate : UserState.walk,
-        phys_distance: distance_phys * meter_per_px, virt_distance: last_distance_virt * meter_per_px,
+        virt_x: log_user_virt.x * meter_per_px, virt_y: log_user_virt.y * meter_per_px, virt_angle: normalizeAngle(log_user_virt.angle),
+        state: log_user_virt.v == 0 && log_user_virt.w == 0 ? UserState.idle : is_rotating ? UserState.rotate : UserState.walk,
+        phys_distance: distance_phys * meter_per_px, virt_distance: log_distance_virt * meter_per_px,
         total_resets: reset_cnt,
     };
     csv_data.push(new_entry);
@@ -368,7 +369,7 @@ function writeText() {
 }
 
 function updateView() {
-    if(!is_in_sim){
+    if (!is_in_sim) {
         drawVirt();
         drawPhys();
     }
@@ -421,8 +422,8 @@ function walk() {
         return false;
     }
 
-    last_user_virt = { ...user_virt };
-    last_distance_virt = distance_virt;
+    log_user_virt = { ...user_virt };
+    log_distance_virt = distance_virt;
 
     // Rotate/walk towards next poi with configured speed
     const target_poi = config.poi[poi_index];
@@ -643,7 +644,7 @@ function caseRunning(msg) {
             path_virt.shift();
 
         // if(!is_in_sim){
-            updateView();
+        updateView();
         // }
     }
 }
@@ -667,20 +668,18 @@ function calcMoveWithGain(user, trans_gain, rot_gain, cur_gain, delta) {
 }
 
 function caseRunningGain(msg) {
-    // Up reset counter
-    if (msg.reset) {
-        reset_counter++;
-    }
-    let user_phys_new = calcMoveWithGain({ ...user_phys }, msg.trans_gain, msg.rot_gain, msg.cur_gain, delta_t);
+    let user_phys_new = { ...user_phys };
 
     // Up reset counter
     if (msg.reset) {
+        user_phys_new = update_reset({ ...user_phys }, getBoundingBox(config.border_phys), config.border_phys, config.obstacles_phys, delta_t);
         reset_cnt++;
         console.log("Reset: ", reset_cnt);
 
         need_reset = false;
     }
     else {
+        user_phys_new = calcMoveWithGain({ ...user_phys }, msg.trans_gain, msg.rot_gain, msg.cur_gain, delta_t);
         // Calc distance
         distance_phys += Math.sqrt((user_phys_new.x - user_phys.x) ** 2 + (user_phys_new.y - user_phys.y) ** 2);
 
@@ -690,7 +689,7 @@ function caseRunningGain(msg) {
 
     // Accept this frame
     if (!need_reset) {
-        user_phys = user_phys_new;
+        user_phys = { x: user_phys_new.x, y: user_phys_new.y, angle: user_phys_new.angle, v: user_virt.v, w: user_virt.w }
         // Update path
         if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
             path_phys.shift();
@@ -698,7 +697,7 @@ function caseRunningGain(msg) {
             path_virt.shift();
 
         // if(!is_in_sim){
-            updateView();
+        updateView();
         // }
     }
 }
@@ -734,7 +733,11 @@ ws.onmessage = async (event) => {
                 state = SimState.finnished;
                 break;
             }
-            if(!is_in_sim){
+
+            log_user_virt = { ...user_virt };
+            log_distance_virt = distance_virt;
+
+            if (!is_in_sim) {
                 // Sleep
                 await sleep(delta_t * 1000);
             }
@@ -753,7 +756,8 @@ ws.onmessage = async (event) => {
                 state = SimState.finnished;
                 break;
             }
-            if(!is_in_sim){
+
+            if (!is_in_sim) {
                 // Sleep
                 await sleep(delta_t * 1000);
             }
@@ -839,11 +843,12 @@ async function loopWithUploadFile() {
             need_reset = false;
         }
         else {
-            if (is_universal)
+            if (is_universal) {
                 user_phys_new = update_user({ ...user_phys }, getBoundingBox(config.border_phys), config.border_phys, config.obstacles_phys, delta_t);
+            }
             else {
                 let gains = calc_gain({ ...user_phys }, getBoundingBox(config.border_phys), config.border_phys, config.obstacles_phys, delta_t)
-                user_phys_new = calcMoveWithGain({ ...user_phys }, gains.trans_gain, gains.rot_gain, gains.cur_gain, delta_t)
+                user_phys_new = calcMoveWithGain({ ...user_phys }, gains.trans_gain, gains.rot_gain, gains.cur_gain, delta_t);
             }
 
             // Calc distance
@@ -873,7 +878,7 @@ async function loopWithUploadFile() {
             }
         }
         // Sleep
-        if(!is_in_sim){
+        if (!is_in_sim) {
             await sleep(delta_t * 1000);
         }
     }
