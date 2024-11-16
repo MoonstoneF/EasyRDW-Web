@@ -511,7 +511,6 @@ function walk() {
 // Buttons
 
 function WSStart() {
-    document.getElementById('simComplete').textContent="";
     if (state == SimState.before_start) {
         sendStartMsg();
         state = SimState.running;
@@ -520,7 +519,6 @@ function WSStart() {
 }
 
 function WSSimulate() {
-    document.getElementById('simComplete').textContent="";
     if (state == SimState.before_start) {
         sendStartMsg();
         state = SimState.running;
@@ -529,7 +527,6 @@ function WSSimulate() {
 }
 
 function WSPause() {
-    document.getElementById('simComplete').textContent="";
     if (state == SimState.running) {
         state = SimState.paused;
     }
@@ -797,7 +794,6 @@ ws.onclose = () => {
 // Buttons
 
 function OLStart() {
-    document.getElementById('simComplete').textContent="";
     if (state == SimState.before_start) {
         state = SimState.running;
         is_in_sim = false;
@@ -806,7 +802,6 @@ function OLStart() {
 }
 
 function OLSimulate() {
-    document.getElementById('simComplete').textContent="";
     if (state == SimState.before_start) {
         state = SimState.running;
         is_in_sim = true;
@@ -815,7 +810,6 @@ function OLSimulate() {
 }
 
 function OLPause() {
-    document.getElementById('simComplete').textContent="";
     if (state == SimState.running) {
         state = SimState.paused;
     }
