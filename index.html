@@ -14,7 +14,8 @@
             <div class="config-section">
                 <h2>Configuration</h2>
                 <!-- Environment Selection Buttons -->
-                <button id="environment-buttons" class="environment-button" onclick="toggleEnvironments()">Environments</button>
+                <button id="environment-buttons" class="environment-button"
+                    onclick="toggleEnvironments()">Environments</button>
 
                 <!-- Preset Configurations (Hidden Initially) -->
                 <!-- <div class="preset-buttons hidden" id="presetContainer">
@@ -24,7 +25,6 @@
                 </div> -->
                 <button class="environment-button" id="uploadConfig">Upload Config</button>
                 <button class="environment-button" id="inputConfig">Input Config</button>
-                <button class="environment-button" id="downloadData">Download Data</button>
                 <div id="environmentControls" style="display: none;">
                     <button class="popup-button" id="environment0">Environment 0</button>
                     <button class="popup-button" id="environment1">Environment 1</button>
@@ -34,6 +34,28 @@
                     <button class="popup-button" id="environment5">Environment 5</button>
                 </div>
             </div>
+            <h2>Control Panel</h2>
+            <div class="controls">
+                <button id="localButton" class="controls-button" onclick="toggleLocal()">Local</button>
+                <div id="localControls" style="display: none;">
+                    <button id="startButton1" class="popup-button" onclick="WSStart()">Start</button>
+                    <button id="pauseButton1" class="popup-button" onclick="WSPause()">Pause</button>
+                    <button id="resetButton1" class="popup-button" onclick="WSReset()">Reset</button>
+                </div>
+
+                <button id="onlineButton" class="controls-button" onclick="toggleOnline()">Online</button>
+                <div id="onlineControls" style="display: none;">
+                    <button id="startButton2" class="popup-button" onclick="OLStart()">Start</button>
+                    <button id="pauseButton2" class="popup-button" onclick="OLPause()">Pause</button>
+                    <button id="resetButton2" class="popup-button" onclick="OLReset()">Reset</button>
+                    <input type="file" id="fileUploadInput" style="display: none;" accept=".json">
+                    <button id="uploadLogicCode" class="popup-button">Upload Code</button>
+                    <input type="file" id="logicCodeUploadInput" style="display: none" accept=".js, .py">
+                    <button id="resetLogicCode" class="popup-button">Default Code</button>
+                    <button id="toggleUniversal" class="popup-button" onclick="toggleUniversal()">Universal</button>
+                </div>
+            </div>
+
         </div>
         <div class="main-content">
             <div class="spaces-container">
@@ -74,32 +96,14 @@
         </div>
 
         <div class="data-panel">
-                <h3>Data Panel</h3>
-                <div class="data-item">Virtual Position: <span id="virtualPosition">(0, 0)</span></div>
-                <div class="data-item">Physical Position: <span id="physicalPosition">(0, 0)</span></div>
-                <div class="data-item">Virtual Distance: <span id="virtualDistance">0 m</span></div>
-                <div class="data-item">Physical Distance: <span id="physicalDistance">0 m</span></div>
-                <div class="data-item">Total Resets: <span id="totalResets">0</span></div>
-            <div class="controls">
-            <button id="localButton" class="controls-button" onclick="toggleLocal()">Local</button>
-                <div id="localControls" style="display: none;">
-                <button id="startButton1" class="popup-button" onclick="WSStart()">Start</button>
-                <button id="pauseButton1" class="popup-button" onclick="WSPause()">Pause</button>
-                    <button id="resetButton1" class="popup-button" onclick="WSReset()">Reset</button>
-                </div>
+            <h3>Data Panel</h3>
+            <div class="data-item">Virtual Position: <span id="virtualPosition">(0, 0)</span></div>
+            <div class="data-item">Physical Position: <span id="physicalPosition">(0, 0)</span></div>
+            <div class="data-item">Virtual Distance: <span id="virtualDistance">0 m</span></div>
+            <div class="data-item">Physical Distance: <span id="physicalDistance">0 m</span></div>
+            <div class="data-item">Total Resets: <span id="totalResets">0</span></div>
 
-                <button id="onlineButton" class="controls-button" onclick="toggleOnline()">Online</button>
-                <div id="onlineControls" style="display: none;">
-                    <button id="startButton2" class="popup-button" onclick="OLStart()">Start</button>
-                    <button id="pauseButton2" class="popup-button" onclick="OLPause()">Pause</button>
-                    <button id="resetButton2" class="popup-button" onclick="OLReset()">Reset</button>
-                    <input type="file" id="fileUploadInput" style="display: none;" accept=".json">
-                    <button id="uploadLogicCode" class="popup-button">Upload Code</button>
-                    <input type="file" id="logicCodeUploadInput" style="display: none" accept=".js, .py">
-                    <button id="resetLogicCode" class="popup-button">Default Code</button>
-                    <button id="toggleUniversal" class="popup-button" onclick="toggleUniversal()">Universal</button>
-                </div>
-            </div>
+            <button class="controls-button" id="downloadData">Download Data</button>
         </div>
     </div>
 

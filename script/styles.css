@@ -21,23 +21,29 @@ body {
 
 /* 左侧控制栏样式 - 使用百分比 */
 .sidebar {
-    width: 25%; /* 使用百分比，确保宽度随屏幕大小变化 */
-    min-width: 250px; /* 最小宽度 */
-    max-width: 300px; /* 最大宽度 */
+    width: 25%;
+    /* 使用百分比，确保宽度随屏幕大小变化 */
+    min-width: 250px;
+    /* 最小宽度 */
+    max-width: 300px;
+    /* 最大宽度 */
     display: flex;
     flex-direction: column;
     gap: 10px;
-    border: 2px solid #add8e6; /* 淡蓝色边框 */
+    border: 2px solid #add8e6;
+    /* 淡蓝色边框 */
     border-radius: 8px;
     padding: 10px;
     box-sizing: border-box;
 }
 
 /* 统一按钮样式 */
-.controls-button{
-    width: 100%; /* 使按钮宽度填满容器 */
+.controls-button {
+    width: 100%;
+    /* 使按钮宽度填满容器 */
     padding: 12px 24px;
-    font-size: 1.5vw; /* 根据视口宽度动态调整字体大小 */
+    font-size: 1.5vw;
+    /* 根据视口宽度动态调整字体大小 */
     cursor: pointer;
     border: none;
     border-radius: 8px;
@@ -46,13 +52,18 @@ body {
     transition: background-color 0.3s ease;
     margin-bottom: 10px;
 }
+
 .controls-button:hover {
-    background-color: #3333FF; /* 更深的绿色 */
+    background-color: #3333FF;
+    /* 更深的绿色 */
 }
+
 .environment-button {
-    width: 100%; /* 使按钮宽度填满容器 */
+    width: 100%;
+    /* 使按钮宽度填满容器 */
     padding: 12px 24px;
-    font-size: 1.5vw; /* 根据视口宽度动态调整字体大小 */
+    font-size: 1.5vw;
+    /* 根据视口宽度动态调整字体大小 */
     cursor: pointer;
     border: none;
     border-radius: 8px;
@@ -66,7 +77,8 @@ body {
 
 /* 悬停效果 */
 .environment-button:hover {
-    background-color: #218838; /* 更深的绿色 */
+    background-color: #218838;
+    /* 更深的绿色 */
 }
 
 /* 主内容区域 */
@@ -79,29 +91,48 @@ body {
 }
 
 .data-panel {
-    background-color: #ffffff; /* 白色背景 */
-    border: 4px solid #f8d0e1; /* 较宽的粉色边框 */
-    border-radius: 12px; /* 更大的圆角 */
-    padding: 20px; /* 内边距 */
-    width: 100%; /* 占据整个右侧宽度 */
-    max-height: 70vh; /* 限制最大高度为视口的 70% */
-    min-height: 300px; /* 设置一个最小高度，避免内容少时过于压缩 */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* 更明显的阴影 */
-    display: flex; /* 使用 flex 布局 */
-    flex-direction: column; /* 垂直排列内容 */
-    gap: 15px; /* 元素之间的间距 */
-    box-sizing: border-box; /* 确保内边距和边框不超出宽度 */
-    overflow-y: auto; /* 允许纵向滚动 */
-    scrollbar-width: thin; /* 调整滚动条宽度（Firefox） */
-    scrollbar-color: #f8d0e1 #ffffff; /* 滚动条颜色（Firefox） */
+    background-color: #ffffff;
+    /* 白色背景 */
+    border: 4px solid #f8d0e1;
+    /* 较宽的粉色边框 */
+    border-radius: 12px;
+    /* 更大的圆角 */
+    padding: 20px;
+    /* 内边距 */
+    width: 100%;
+    /* 占据整个右侧宽度 */
+    max-height: 70vh;
+    /* 限制最大高度为视口的 70% */
+    min-height: 400px;
+    /* 设置一个最小高度，避免内容少时过于压缩 */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    /* 更明显的阴影 */
+    display: flex;
+    /* 使用 flex 布局 */
+    flex-direction: column;
+    /* 垂直排列内容 */
+    gap: 15px;
+    /* 元素之间的间距 */
+    box-sizing: border-box;
+    /* 确保内边距和边框不超出宽度 */
+    overflow-y: auto;
+    /* 允许纵向滚动 */
+    scrollbar-width: thin;
+    /* 调整滚动条宽度（Firefox） */
+    scrollbar-color: #f8d0e1 #ffffff;
+    /* 滚动条颜色（Firefox） */
 }
 
 /* 标题样式 */
 .data-panel h3 {
-    margin-bottom: 20px; /* 标题下方的间距 */
-    color: #333; /* 深灰色文字 */
-    font-size: 1.6em; /* 标题文字稍大 */
-    text-align: center; /* 标题居中 */
+    margin-bottom: 20px;
+    /* 标题下方的间距 */
+    color: #333;
+    /* 深灰色文字 */
+    font-size: 1.6em;
+    /* 标题文字稍大 */
+    text-align: center;
+    /* 标题居中 */
 }
 
 /* 数据项样式 */
@@ -111,17 +142,22 @@ body {
 
 /* 自定义滚动条样式（适用于 WebKit 浏览器，如 Chrome 和 Edge） */
 .data-panel::-webkit-scrollbar {
-    width: 8px; /* 滚动条宽度 */
+    width: 8px;
+    /* 滚动条宽度 */
 }
 
 .data-panel::-webkit-scrollbar-track {
-    background: #ffffff; /* 滚动条轨道背景 */
+    background: #ffffff;
+    /* 滚动条轨道背景 */
 }
 
 .data-panel::-webkit-scrollbar-thumb {
-    background-color: #f8d0e1; /* 滚动条滑块颜色 */
-    border-radius: 10px; /* 圆角滚动条 */
-    border: 2px solid #ffffff; /* 滑块边框 */
+    background-color: #f8d0e1;
+    /* 滚动条滑块颜色 */
+    border-radius: 10px;
+    /* 圆角滚动条 */
+    border: 2px solid #ffffff;
+    /* 滑块边框 */
 }
 
 
@@ -174,17 +210,21 @@ body {
 
 /* 模态框样式 */
 .modal {
-    display: none; /* 初始状态下隐藏 */
-    position: fixed; /* 固定在屏幕上 */
+    display: none;
+    /* 初始状态下隐藏 */
+    position: fixed;
+    /* 固定在屏幕上 */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* 背景半透明 */
+    background-color: rgba(0, 0, 0, 0.5);
+    /* 背景半透明 */
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000; /* 确保在最上层 */
+    z-index: 1000;
+    /* 确保在最上层 */
 }
 
 /* 模态框内容 */
@@ -215,16 +255,21 @@ body {
 
 /* 弹出按钮通用样式 */
 .popup-button {
-    width: 200px; /* 固定宽度 */
-    height: 40px; /* 固定高度 */
+    width: 200px;
+    /* 固定宽度 */
+    height: 40px;
+    /* 固定高度 */
     font-size: calc(0.1 * 120px);
-    line-height: 40px; /* 垂直居中 */
+    line-height: 40px;
+    /* 垂直居中 */
     text-align: center;
     cursor: pointer;
     border: none;
     border-radius: 5px;
-    background-color: #6a0dad; /* 紫色背景 */
-    color: white; /* 白色文字 */
+    background-color: #6a0dad;
+    /* 紫色背景 */
+    color: white;
+    /* 白色文字 */
     transition: background-color 0.3s ease, transform 0.2s ease;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -234,39 +279,49 @@ body {
 
 /* 悬停效果 */
 .popup-button:hover {
-    background-color: #8a2be2; /* 更亮的紫色 */
-    transform: scale(1.05); /* 微微放大 */
+    background-color: #8a2be2;
+    /* 更亮的紫色 */
+    transform: scale(1.05);
+    /* 微微放大 */
 }
 
 /* 激活效果（点击时） */
 .popup-button:active {
-    background-color: #4b0082; /* 更深的紫色 */
-    transform: scale(0.95); /* 点击时略微缩小 */
+    background-color: #4b0082;
+    /* 更深的紫色 */
+    transform: scale(0.95);
+    /* 点击时略微缩小 */
 }
 
 
 /* 小屏幕调整 */
 @media (max-width: 600px) {
     .sidebar {
-        width: 80%; /* 侧边栏宽度占屏幕的80% */
-        min-width: 200px; /* 最小宽度 */
+        width: 80%;
+        /* 侧边栏宽度占屏幕的80% */
+        min-width: 200px;
+        /* 最小宽度 */
     }
 
     .sidebar button,
     .controls button,
     .environment-button {
-        font-size: 4vw; /* 按钮字体较大 */
-        padding: 10px 20px; /* 增加按钮内边距 */
+        font-size: 4vw;
+        /* 按钮字体较大 */
+        padding: 10px 20px;
+        /* 增加按钮内边距 */
     }
 
     .upload-code-button,
     .default-code-button,
     .universal-button {
-        font-size: 2vw; /* 字体大小减半 */
+        font-size: 2vw;
+        /* 字体大小减半 */
     }
 
     .data-panel {
-        width: 80%; /* 数据面板占屏幕80% */
+        width: 80%;
+        /* 数据面板占屏幕80% */
         height: 250px;
     }
 }
@@ -274,23 +329,27 @@ body {
 /* 中等屏幕调整 */
 @media (min-width: 600px) and (max-width: 1200px) {
     .sidebar {
-        width: 30%; /* 侧边栏占屏幕30% */
+        width: 30%;
+        /* 侧边栏占屏幕30% */
     }
 
     .sidebar button,
     .controls button,
     .environment-button {
-        font-size: 2.5vw; /* 按钮字体适中 */
+        font-size: 2.5vw;
+        /* 按钮字体适中 */
     }
 
     .upload-code-button,
     .default-code-button,
     .universal-button {
-        font-size: 1.25vw; /* 字体大小减半 */
+        font-size: 1.25vw;
+        /* 字体大小减半 */
     }
 
     .data-panel {
-        width: 30%; /* 数据面板占屏幕的30% */
+        width: 30%;
+        /* 数据面板占屏幕的30% */
         height: 300px;
     }
 }
@@ -298,23 +357,27 @@ body {
 /* 大屏幕调整 */
 @media (min-width: 1200px) {
     .sidebar {
-        width: 25%; /* 侧边栏宽度固定为屏幕的25% */
+        width: 25%;
+        /* 侧边栏宽度固定为屏幕的25% */
     }
 
     .sidebar button,
     .controls button,
     .environment-button {
-        font-size: 1.5vw; /* 按钮字体适度调整 */
+        font-size: 1.5vw;
+        /* 按钮字体适度调整 */
     }
 
     .upload-code-button,
     .default-code-button,
     .universal-button {
-        font-size: 0.75vw; /* 字体大小减半 */
+        font-size: 0.75vw;
+        /* 字体大小减半 */
     }
 
     .data-panel {
-        width: 25%; /* 数据面板宽度占屏幕的25% */
+        width: 25%;
+        /* 数据面板宽度占屏幕的25% */
         height: 350px;
     }
 }
