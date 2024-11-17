@@ -56,6 +56,7 @@ fileUploadInput.addEventListener("change", (event) => {
                 config = convertConfigToPixels(configData);
                 console.log("Uploaded Config (in pixels):", config);
                 saveConfig();
+                init();
                 updateView();
             } catch (error) {
                 alert("Invalid JSON format");
@@ -78,6 +79,7 @@ submitConfigButton.addEventListener("click", () => {
         config = convertConfigToPixels(parsedConfig);
         console.log("Input Config (in pixels):", config);
         saveConfig();
+        init();
         updateView();
     } catch (error) {
         alert("Invalid JSON format");
