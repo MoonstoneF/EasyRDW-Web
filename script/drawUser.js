@@ -537,7 +537,10 @@ function WSPause() {
 }
 
 function WSReset() {
-    document.getElementById('simComplete').textContent="";
+    // Exit simulation mode 
+    document.getElementById('simComplete').textContent = "";
+    is_in_sim = false;
+
     if (state == SimState.running || state == SimState.paused || state == SimState.finnished) {
         if (state != SimState.finnished) {
             sendEndMsg();
@@ -618,8 +621,8 @@ function sendRunMsg() {
 
 function sendEndMsg() {
     ws.send(JSON.stringify(EndMsg()));
-    if(is_in_sim){
-        document.getElementById('simComplete').textContent="Simulation Completed!";
+    if (is_in_sim) {
+        document.getElementById('simComplete').textContent = "Simulation Completed!";
     }
 }
 function caseRunning(msg) {
@@ -819,7 +822,7 @@ function OLPause() {
 }
 
 function OLReset() {
-    document.getElementById('simComplete').textContent="";
+    document.getElementById('simComplete').textContent = "";
     if (state == SimState.running || state == SimState.paused || state == SimState.finnished) {
         init();
         updateView();
@@ -880,8 +883,8 @@ async function loopWithUploadFile() {
             if (!walk()) {
                 // Finish simulation
                 state = SimState.finnished;
-                if(is_in_sim){
-                    document.getElementById('simComplete').textContent="Simulation Completed!";
+                if (is_in_sim) {
+                    document.getElementById('simComplete').textContent = "Simulation Completed!";
                 }
                 break;
             }
