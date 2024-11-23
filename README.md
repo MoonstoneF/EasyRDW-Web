@@ -88,7 +88,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000 # remember to open port8000 to publi
 
 ### 3.1 本地运行
 
-点击 “Local” 按钮进入本地运行模式，您需要在本地搭建并运行 WebSocket 控制器服务器，接收相关请求信息并返回用户下一步的物理位置信息。具体实现请参考 EasyRDW-Local 仓库。
+点击 “Local” 按钮进入本地运行模式，您需要在本地搭建并运行 WebSocket 控制器服务器，接收相关请求信息并返回用户下一步的物理位置信息。具体实现请参考 [EasyRDW-Local](https://github.com/AlyName/EasyRDW-Local-Stable) 仓库。
 
 ### 3.2 线上运行
 
