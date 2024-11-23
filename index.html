@@ -38,6 +38,11 @@
             <div class="controls">
                 <button id="localButton" class="controls-button" onclick="toggleLocal()">Local</button>
                 <div id="localControls" style="display: none;">
+                    <div class="data-item">
+                        <span id="wsNotConnect">Local not connected!
+                            Start the Local WebSocket server and refresh this page.
+                        </span>
+                    </div>
                     <button id="startButton1" class="popup-button" onclick="WSStart()">Start</button>
                     <button id="simulButton1" class="popup-button" onclick="WSSimulate()">Simulate</button>
                     <button id="pauseButton1" class="popup-button" onclick="WSPause()">Pause</button>
@@ -53,7 +58,7 @@
                     <button id="toggleUniversal" class="popup-button" onclick="toggleUniversal()">Toggle Mode</button>
                     <input type="file" id="fileUploadInput" style="display: none;" accept=".json">
                     <button id="uploadLogicCode" class="popup-button">Upload Code</button>
-                    <input type="file" id="logicCodeUploadInput" style="display: none" accept=".js, .py">
+                    <input type="file" id="logicCodeUploadInput" style="display: none" accept=".js">
                     <button id="resetLogicCode" class="popup-button">Default Code</button>
                 </div>
             </div>

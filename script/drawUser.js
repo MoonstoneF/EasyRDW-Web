@@ -712,6 +712,7 @@ function caseRunningGain(msg) {
 
 ws.onopen = () => {
     console.log('WebSocket connection opened');
+    document.getElementById("wsNotConnect").style.display = "none";
     all_time = performance.now();
     updateView();
 };
