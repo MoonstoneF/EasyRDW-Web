@@ -644,7 +644,7 @@ function caseRunning(msg) {
     // Accept this frame
     if (!need_reset) {
         // Update user physcial position
-        user_phys = { x: msg.user_x, y: msg.user_y, angle: msg.user_direction }
+        user_phys = { x: msg.user_x, y: msg.user_y, angle: msg.user_direction, v: user_virt.v, w: user_virt.w }
         // Update path
         if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
             path_phys.shift();
@@ -680,7 +680,7 @@ function caseRunningGain(msg) {
 
     // Up reset counter
     if (msg.reset) {
-        user_phys_new = update_reset({ ...user_phys }, getBoundingBox(config.border_phys), config.border_phys, config.obstacles_phys, delta_t);
+        user_phys_new = { x: msg.user_x, y: msg.user_y, angle: msg.user_direction };
         reset_cnt++;
         console.log("Reset: ", reset_cnt);
 
