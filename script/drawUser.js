@@ -120,12 +120,12 @@ function convertConfigToPixels(configData) {
     convertedConfig.initial_user_phys = convertCoordsToPixels([configData.initial_user_phys])[0];
     console.log(convertedConfig.initial_user_phys);
 
-    convertedConfig.initial_user_phys.angle = configData.initial_user_phys.angle;
+    convertedConfig.initial_user_phys.angle = normalizeAngle(configData.initial_user_phys.angle);
     convertedConfig.initial_user_phys.v = configData.initial_user_phys.v * (delta_t / meter_per_px);
     convertedConfig.initial_user_phys.w = configData.initial_user_phys.w * (delta_t);
 
     convertedConfig.initial_user_virt = convertCoordsToPixels([configData.initial_user_virt])[0];
-    convertedConfig.initial_user_virt.angle = configData.initial_user_virt.angle;
+    convertedConfig.initial_user_virt.angle = normalizeAngle(configData.initial_user_virt.angle);
     convertedConfig.initial_user_virt.v = configData.initial_user_virt.v * (delta_t / meter_per_px);
     convertedConfig.initial_user_virt.w = configData.initial_user_virt.w * (delta_t);
 
@@ -149,12 +149,12 @@ function convertConfigToCoords(configData) {
     convertedConfig.poi = convertPixelsToCoords(configData.poi);
 
     convertedConfig.initial_user_phys = convertPixelsToCoords([configData.initial_user_phys])[0];
-    convertedConfig.initial_user_phys.angle = configData.initial_user_phys.angle;
+    convertedConfig.initial_user_phys.angle = normalizeAngle(configData.initial_user_phys.angle);
     convertedConfig.initial_user_phys.v = configData.initial_user_phys.v / (delta_t / meter_per_px);
     convertedConfig.initial_user_phys.w = configData.initial_user_phys.w / (delta_t);
 
     convertedConfig.initial_user_virt = convertPixelsToCoords([configData.initial_user_virt])[0];
-    convertedConfig.initial_user_virt.angle = configData.initial_user_virt.angle;
+    convertedConfig.initial_user_virt.angle = normalizeAngle(configData.initial_user_virt.angle);
     convertedConfig.initial_user_virt.v = configData.initial_user_virt.v / (delta_t / meter_per_px);
     convertedConfig.initial_user_virt.w = configData.initial_user_virt.w / (delta_t);
 
@@ -434,7 +434,7 @@ function walk() {
     };
 
     const target_distance = Math.sqrt(target_direction.x ** 2 + target_direction.y ** 2);
-    const target_angle = Math.atan2(target_direction.y, target_direction.x); // Angle to the target
+    const target_angle = normalizeAngle(Math.atan2(target_direction.y, target_direction.x)); // Angle to the target
 
     // Check if the walker is rotating or moving
     if (is_rotating) {
@@ -450,21 +450,18 @@ function walk() {
         else {
             if (user_virt.angle < target_angle) {
                 user_virt.angle -= config.turn_speed;
-                if (user_virt.angle < - Math.PI) {
-                    user_virt.angle += 2 * Math.PI;
-                }
             }
             else {
                 user_virt.angle += config.turn_speed;
-                if (user_virt.angle > Math.PI) {
-                    user_virt.angle -= 2 * Math.PI;
-                }
             }
         }
 
+        user_virt.angle = normalizeAngle(user_virt.angle);
+
+
         // Turned to target angle
         if (Math.abs(user_virt.angle - target_angle) < config.turn_speed) {
-            user_virt.angle = target_angle; // Snap to the target angle
+            user_virt.angle = normalizeAngle(target_angle); // Snap to the target angle
             user_virt.v = config.walk_speed;    // Start walking
             user_virt.w = 0;
             is_rotating = false; // Stop rotating
@@ -484,7 +481,7 @@ function walk() {
 
             user_virt.x += normalizedDirection.x * config.walk_speed;
             user_virt.y += normalizedDirection.y * config.walk_speed;
-            user_virt.angle = target_angle;
+            user_virt.angle = normalizeAngle(target_angle);
             user_virt.v = config.walk_speed;
             user_virt.w = 0;
         }
@@ -625,7 +622,7 @@ function sendEndMsg() {
         document.getElementById('simComplete').textContent = "Simulation Completed!";
     }
 }
-function caseRunning(msg) {
+function caseRunning(msg) {    
     // Up reset counter
     if (msg.reset) {
         reset_cnt++;
@@ -644,7 +641,7 @@ function caseRunning(msg) {
     // Accept this frame
     if (!need_reset) {
         // Update user physcial position
-        user_phys = { x: msg.user_x, y: msg.user_y, angle: msg.user_direction, v: user_virt.v, w: user_virt.w }
+        user_phys = { x: msg.user_x, y: msg.user_y, angle: normalizeAngle(msg.user_direction), v: user_virt.v, w: user_virt.w }
         // Update path
         if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
             path_phys.shift();
@@ -668,7 +665,7 @@ function calcMoveWithGain(user, trans_gain, rot_gain, cur_gain, delta) {
     let rot = w / rot_gain;
 
     user.angle += rot + trans / cur_gain;
-    user.angle %= 2 * Math.PI;
+    user.angle = normalizeAngle(user.angle);
     user.x += trans * Math.cos(user.angle);
     user.y += trans * Math.sin(user.angle);
 
@@ -680,14 +677,14 @@ function caseRunningGain(msg) {
 
     // Up reset counter
     if (msg.reset) {
-        user_phys_new = { x: msg.user_x, y: msg.user_y, angle: msg.user_direction };
+        user_phys_new = { x: msg.user_x, y: msg.user_y, angle: normalizeAngle(msg.user_direction) };
         reset_cnt++;
         console.log("Reset: ", reset_cnt);
 
         need_reset = false;
     }
     else {
-        user_phys_new = calcMoveWithGain({ ...user_phys }, msg.trans_gain, msg.rot_gain, msg.cur_gain, delta_t);
+        user_phys_new = calcMoveWithGain({ ...user_phys }, msg.trans_gain, msg.rot_gain, msg.cur_gain / meter_per_px, delta_t);
         // Calc distance
         distance_phys += Math.sqrt((user_phys_new.x - user_phys.x) ** 2 + (user_phys_new.y - user_phys.y) ** 2);
 
@@ -697,7 +694,7 @@ function caseRunningGain(msg) {
 
     // Accept this frame
     if (!need_reset) {
-        user_phys = { x: user_phys_new.x, y: user_phys_new.y, angle: user_phys_new.angle, v: user_virt.v, w: user_virt.w }
+        user_phys = { x: user_phys_new.x, y: user_phys_new.y, angle: normalizeAngle(user_phys_new.angle), v: user_virt.v, w: user_virt.w }
         // Update path
         if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
             path_phys.shift();
@@ -831,7 +828,7 @@ function OLReset() {
 }
 
 async function loopWithUploadFile() {
-    let user_phys_new = { x: user_phys.x, y: user_phys.y, angle: user_phys.angle };
+    let user_phys_new = { x: user_phys.x, y: user_phys.y, angle: normalizeAngle(user_phys.angle) };
     // updateView();
 
     while (1) {
@@ -844,23 +841,32 @@ async function loopWithUploadFile() {
             // reset: end loop
             break;
         }
+        // convert into meter
+        let m_user_phys = {x: user_phys.x * meter_per_px, y: user_phys.y * meter_per_px, angle: user_phys.angle, v: user_phys.v * meter_per_px, w: user_phys.w};
+        let m_config = convertConfigToCoords(config);
+        let m_user_phys_new = { x: user_phys_new.x * meter_per_px, y: user_phys_new.y * meter_per_px, angle: user_phys_new.angle };
 
         // Get new user physical with user uploaded functions
         if (need_reset) {
-            user_phys_new = update_reset({ ...user_phys }, getBoundingBox(config.border_phys), config.border_phys, config.obstacles_phys, delta_t);
+            m_user_phys_new = update_reset({ ...m_user_phys }, getBoundingBox(m_config.border_phys), m_config.border_phys, m_config.obstacles_phys, delta_t);
             reset_cnt++;
             console.log("Reset: ", reset_cnt);
             need_reset = false;
+
+            user_phys_new = { x: m_user_phys_new.x / meter_per_px, y: m_user_phys_new.y / meter_per_px, angle: m_user_phys_new.angle, v: m_user_phys_new.v / meter_per_px, w: m_user_phys_new.w};
         }
         else {
             if (is_universal) {
-                user_phys_new = update_user({ ...user_phys }, getBoundingBox(config.border_phys), config.border_phys, config.obstacles_phys, delta_t);
+                m_user_phys_new = update_user({ ...m_user_phys }, getBoundingBox(m_config.border_phys), m_config.border_phys, m_config.obstacles_phys, delta_t);
+                user_phys_new = { x: m_user_phys_new.x / meter_per_px, y: m_user_phys_new.y / meter_per_px, angle: m_user_phys_new.angle, v: m_user_phys_new.v / meter_per_px, w: m_user_phys_new.w};
+
             }
             else {
-                let gains = calc_gain({ ...user_phys }, getBoundingBox(config.border_phys), config.border_phys, config.obstacles_phys, delta_t)
-                user_phys_new = calcMoveWithGain({ ...user_phys }, gains.trans_gain, gains.rot_gain, gains.cur_gain, delta_t);
+                let gains = calc_gain({ ...m_user_phys }, getBoundingBox(m_config.border_phys), m_config.border_phys, m_config.obstacles_phys, delta_t)
+                user_phys_new = calcMoveWithGain({ ...user_phys }, gains.trans_gain, gains.rot_gain, gains.cur_gain / meter_per_px, delta_t);
             }
 
+            
             // Calc distance
             distance_phys += Math.sqrt((user_phys_new.x - user_phys.x) ** 2 + (user_phys_new.y - user_phys.y) ** 2);
 
@@ -871,7 +877,7 @@ async function loopWithUploadFile() {
         // Accept this frame
         if (!need_reset) {
             // Update user physcial position
-            user_phys = { x: user_phys_new.x, y: user_phys_new.y, angle: user_phys_new.angle, v: user_virt.v, w: user_virt.w }
+            user_phys = { x: user_phys_new.x, y: user_phys_new.y, angle: normalizeAngle(user_phys_new.angle), v: user_virt.v, w: user_virt.w }
             // Update path
             if (path_phys.push({ x: user_phys.x, y: user_phys.y }) > MAX_PATH_LEN)
                 path_phys.shift();
