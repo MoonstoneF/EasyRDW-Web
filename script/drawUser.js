@@ -841,23 +841,32 @@ async function loopWithUploadFile() {
             // reset: end loop
             break;
         }
+        // convert into meter
+        let m_user_phys = {x: user_phys.x * meter_per_px, y: user_phys.y * meter_per_px, angle: user_phys.angle, v: user_phys.v * meter_per_px, w: user_phys.w};
+        let m_config = convertConfigToCoords(config);
+        let m_user_phys_new = { x: user_phys_new.x * meter_per_px, y: user_phys_new.y * meter_per_px, angle: user_phys_new.angle };
 
         // Get new user physical with user uploaded functions
         if (need_reset) {
-            user_phys_new = update_reset({ ...user_phys }, getBoundingBox(config.border_phys), config.border_phys, config.obstacles_phys, delta_t);
+            m_user_phys_new = update_reset({ ...m_user_phys }, getBoundingBox(m_config.border_phys), m_config.border_phys, m_config.obstacles_phys, delta_t);
             reset_cnt++;
             console.log("Reset: ", reset_cnt);
             need_reset = false;
+
+            user_phys_new = { x: m_user_phys_new.x / meter_per_px, y: m_user_phys_new.y / meter_per_px, angle: m_user_phys_new.angle, v: m_user_phys_new.v / meter_per_px, w: m_user_phys_new.w};
         }
         else {
             if (is_universal) {
-                user_phys_new = update_user({ ...user_phys }, getBoundingBox(config.border_phys), config.border_phys, config.obstacles_phys, delta_t);
+                m_user_phys_new = update_user({ ...m_user_phys }, getBoundingBox(m_config.border_phys), m_config.border_phys, m_config.obstacles_phys, delta_t);
+                user_phys_new = { x: m_user_phys_new.x / meter_per_px, y: m_user_phys_new.y / meter_per_px, angle: m_user_phys_new.angle, v: m_user_phys_new.v / meter_per_px, w: m_user_phys_new.w};
+
             }
             else {
-                let gains = calc_gain({ ...user_phys }, getBoundingBox(config.border_phys), config.border_phys, config.obstacles_phys, delta_t)
-                user_phys_new = calcMoveWithGain({ ...user_phys }, gains.trans_gain, gains.rot_gain, gains.cur_gain, delta_t);
+                let gains = calc_gain({ ...m_user_phys }, getBoundingBox(m_config.border_phys), m_config.border_phys, m_config.obstacles_phys, delta_t)
+                user_phys_new = calcMoveWithGain({ ...user_phys }, gains.trans_gain, gains.rot_gain, gains.cur_gain / meter_per_px, delta_t);
             }
 
+            
             // Calc distance
             distance_phys += Math.sqrt((user_phys_new.x - user_phys.x) ** 2 + (user_phys_new.y - user_phys.y) ** 2);
 
