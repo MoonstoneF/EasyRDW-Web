@@ -1,4 +1,4 @@
-MIN_CUR_GAIN_R = 750;
+MIN_CUR_GAIN_R = 7.5;
 
 function calc_gain(user, physical_space, border, obstacles, delta) {
     const [x_f, y_f] = mapf_calc_f(physical_space.width, physical_space.height, [user.x, user.y]);
