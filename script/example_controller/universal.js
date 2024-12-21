@@ -1,4 +1,4 @@
-MIN_CUR_GAIN_R = 750;
+MIN_CUR_GAIN_R = 7.5;
 
 function mapf_calc_f(width, height, pos) {
     const gamma = 2.5;
@@ -48,8 +48,7 @@ function update_user(user, physical_space, border, obstacles, delta) {
 }
 
 function update_reset(user, physical_space, border, obstacles, delta) {
-    const [x_f, y_f] = mapf_calc_f(physical_space.width, physical_space.height, [user.x, user.y]);
-    const mapf_angle = Math.atan2(y_f, x_f);
-    user.angle = mapf_angle % (2 * Math.PI);
+    user.angle += Math.PI;
+    user.angle %= 2 * Math.PI;
     return user;
 }
