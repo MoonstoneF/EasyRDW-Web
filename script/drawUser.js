@@ -446,10 +446,13 @@ function walk() {
             }
             else {
                 user_virt.angle -= config.turn_speed;
+                user_virt.w *= -1;
             }
         else {
             if (user_virt.angle < target_angle) {
                 user_virt.angle -= config.turn_speed;
+                user_virt.w *= -1;
+
                 if (user_virt.angle < - Math.PI) {
                     user_virt.angle += 2 * Math.PI;
                 }
